@@ -77,7 +77,7 @@ body,button,input,select{font-family:"Plus Jakarta Sans","Segoe UI",Roboto,Arial
   <select id="fl"><option value="">Semua laporan</option><option>Sudah</option><option>Belum</option></select>
   <button id="rst">Reset</button><button id="bx" class="x">Unduh Excel</button><button id="bp" class="p">Unduh PDF</button>
  </div>
- <div class="tw"><table><thead><tr><th>Kegiatan</th><th>Periode</th><th>Triwulan</th><th>Jadwal awal</th><th>Realisasi</th><th>Status</th><th>Laporan</th><th>Link bukti</th></tr></thead><tbody id="tb"></tbody></table></div>
+ <div class="tw"><table><thead><tr><th>Kegiatan</th><th>Bulan</th><th>Periode</th><th>Triwulan</th><th>Jadwal awal</th><th>Realisasi</th><th>Status</th><th>Laporan</th><th>Link bukti</th></tr></thead><tbody id="tb"></tbody></table></div>
  <div class="sub" id="cnt" style="margin-top:10px"></div><button class="more hide" id="more">Tampilkan lebih banyak</button>
 </section>
 <section class="card" style="margin-top:14px"><h2>Daftar kegiatan SKM (acuan)</h2><div class="sub">Frekuensi minimal dan penanggung jawab tiap kegiatan</div><div class="acts" id="acts"></div></section>
@@ -105,7 +105,7 @@ body,button,input,select{font-family:"Plus Jakarta Sans","Segoe UI",Roboto,Arial
 <section class="card" style="margin:14px 0"><h2>Kelengkapan dokumen pengungkit</h2><div class="sub" id="wtx"></div><div class="bar"><i id="wbr"></i></div></section>
 <section class="grid two">
  <div class="card"><h2>Komposisi status dokumen</h2><div class="sub">Sudah ada, sebagian, atau belum ada</div><div class="chartbox"><canvas id="c5"></canvas></div></div>
- <div class="card"><h2>Status dokumen per komponen</h2><div class="sub">Setiap batang = satu komponen</div><div class="chartbox" style="height:420px"><canvas id="c6"></canvas></div></div>
+ <div class="card"><h2>Status dokumen per komponen</h2><div class="sub">Setiap batang = satu komponen</div><div class="chartbox" style="height:300px"><canvas id="c6"></canvas></div></div>
 </section>
 <section class="card" style="margin-top:14px"><h2>Tabel dokumen pengungkit WBK/WBBM</h2>
  <div class="filters"><input id="w-q" placeholder="Cari dokumen atau sub bab…"><select id="w-k"><option value="">Semua kategori</option></select><select id="w-c"><option value="">Semua komponen</option></select><label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#667085">Tahun <select id="w-y" style="min-width:90px"></select></label><select id="w-t"><option value="">Semua status</option></select><button id="w-r">Reset</button><button id="w-x" class="x">Unduh Excel</button><button id="w-p" class="p">Unduh PDF</button></div>
@@ -164,7 +164,7 @@ function sq(r){const p=(r["Periode"]||"").toLowerCase();let m=/triwulan\s+(iv|ii
 const twl=r=>{const q=sq(r),R=["","I","II","III","IV"];return q.length?"Triwulan "+R[q[0]]+(q.length>1?"–"+R[q[q.length-1]]:""):"–"};
 function filtered(){const q=$("q").value.toLowerCase(),k=$("fk").value,s=$("fs").value,t=$("ft").value,l=$("fl").value,w=$("fq").value;
  return rows.filter(r=>(!k||r["Kegiatan"]==k)&&(!s||r["Satuan"]==s)&&(!t||stat(r)==t)&&(!l||lap(r)==l)&&(!w||sq(r).includes(+w))&&(!q||(r["Kegiatan"]+" "+r["Periode"]+" "+(r["Keterangan (alasan jadwal berubah / tidak terlaksana)"]||"")).toLowerCase().includes(q)))}
-function table(){const f=filtered();$("tb").innerHTML=f.slice(0,shown).map(r=>{const s=stat(r);return`<tr><td>${esc(r["Kegiatan"])}</td><td>${esc(r["Periode"])}</td><td>${twl(r)}</td><td>${esc(r["Tanggal Jadwal Awal"]||"–")}</td><td>${esc(r["Tanggal Realisasi"]||"–")}</td><td><span class="b ${CLS[s]}">${s}</span></td><td><span class="b ${lap(r)=="Sudah"?"s-ok":"s-wait"}">${lap(r)}</span></td><td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||`<tr><td colspan="8">Tidak ada data yang cocok.</td></tr>`;
+function table(){const f=filtered();$("tb").innerHTML=f.slice(0,shown).map(r=>{const s=stat(r);return`<tr><td>${esc(r["Kegiatan"])}</td><td>${esc(r._b||"–")}</td><td>${esc(r["Periode"])}</td><td>${twl(r)}</td><td>${esc(r["Tanggal Jadwal Awal"]||"–")}</td><td>${esc(r["Tanggal Realisasi"]||"–")}</td><td><span class="b ${CLS[s]}">${s}</span></td><td><span class="b ${lap(r)=="Sudah"?"s-ok":"s-wait"}">${lap(r)}</span></td><td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||`<tr><td colspan="9">Tidak ada data yang cocok.</td></tr>`;
  $("cnt").textContent=`Menampilkan ${Math.min(shown,f.length)} dari ${f.length} baris`;$("more").classList.toggle("hide",f.length<=shown)}
 function render(){const n=rows.length,c={};ST.forEach(s=>c[s]=0);rows.forEach(r=>c[stat(r)]++);const done=c[ST[0]]+c[ST[1]],lp=rows.filter(r=>lap(r)=="Sudah").length,pct=n?Math.round(done/n*100):0;
  $("kpis").innerHTML=[["Total jadwal kegiatan",n,""],["Sudah terlaksana",done,"k-g"],["Jadwal berubah",c[ST[1]],"k-o"],["Tidak terlaksana",c[ST[2]],"k-r"],["Belum dilaksanakan",c[ST[3]],"k-a"],["Laporan sudah dibuat",lp,"k-g"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
@@ -265,8 +265,8 @@ function wrender(){const ys=wyears(),s=$("w-y"),cur=s.value,cy=String(new Date()
  $("wbr").style.width=pct+"%";$("wtx").textContent=`Tahun ${s.value}: ${c.Sudah} dari ${n} dokumen sudah ada (${pct}%).`;
  const kk=[...new Set(wrow.map(wkey))];
  if(wc1)wc1.destroy();wc1=new Chart($("c5"),{type:"doughnut",data:{labels:WS,datasets:[{data:WS.map(x=>c[x]),backgroundColor:WS.map(x=>WCOL[x]),borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
- $("c6").parentElement.style.height=(kk.length*46+90)+"px";
- if(wc2)wc2.destroy();wc2=new Chart($("c6"),{type:"bar",data:{labels:kk.map(k=>{const p=k.split("|"),x=p[1].length>30?p[1].slice(0,29)+"…":p[1];return[p[0],x]}),datasets:WS.map(x=>({label:x,backgroundColor:WCOL[x],data:kk.map(k=>wrow.filter(r=>wkey(r)==k&&wst(r)==x).length)}))},options:{indexAxis:"y",maintainAspectRatio:false,layout:{padding:{right:12}},scales:{x:{stacked:true,ticks:{precision:0}},y:{stacked:true,ticks:{font:{size:10}}}},plugins:{legend:{position:"bottom"}}}});
+ $("c6").parentElement.style.height=Math.min(380,Math.max(300,kk.length*30+80))+"px";
+ if(wc2)wc2.destroy();wc2=new Chart($("c6"),{type:"bar",data:{labels:kk.map(k=>{const p=k.split("|"),x=p[1].length>30?p[1].slice(0,29)+"…":p[1];return[p[0],x]}),datasets:WS.map(x=>({label:x,backgroundColor:WCOL[x],data:kk.map(k=>wrow.filter(r=>wkey(r)==k&&wst(r)==x).length)}))},options:{indexAxis:"y",maintainAspectRatio:false,layout:{padding:{right:12}},scales:{x:{stacked:true,ticks:{precision:0}},y:{stacked:true,ticks:{font:{size:10},autoSkip:false}}},plugins:{legend:{position:"bottom"}}}});
  fill("w-k",[...new Set(wrow.map(r=>r["Kategori"]))],"Semua kategori");fill("w-c",[...new Set(wrow.map(r=>r["Komponen"]))],"Semua komponen");fill("w-t",WS,"Semua status");wtable();if(wnil.length)wnilai()}
 function wnilai(){const by=u=>wnil.find(r=>String(r["Uraian"]).trim().toUpperCase()==u&&r["Jenis"]!="Total"||String(r["Uraian"]).trim().toUpperCase()==u),pick=(u,j)=>wnil.find(r=>String(r["Uraian"]).trim().toUpperCase()==u&&(!j||r["Jenis"]==j));
  const cards=[["Nilai Evaluasi Reformasi Birokrasi",pick("NILAI EVALUASI REFORMASI BIROKRASI"),"k-o"],["Pengungkit",pick("PENGUNGKIT"),""],["Pemenuhan",pick("PEMENUHAN"),"k-g"],["Reform",pick("REFORM"),"k-a"],["Hasil",pick("HASIL"),"k-g"]];
@@ -387,7 +387,7 @@ const V=msv,inc=(a,x)=>!a.length||a.includes(x);
 
 // ---- fungsi penyaring (multi-pilih) ----
 window.filtered=function(){const q=$("q").value.toLowerCase(),k=V("fk"),s=V("fs"),t=V("ft"),l=V("fl"),w=V("fq");
- return rows.filter(r=>inc(k,r["Kegiatan"])&&inc(s,r["Satuan"])&&inc(t,stat(r))&&inc(l,lap(r))&&(!w.length||w.some(x=>sq(r).includes(+x)))&&(!q||(r["Kegiatan"]+" "+r["Periode"]+" "+(r["Keterangan (alasan jadwal berubah / tidak terlaksana)"]||"")).toLowerCase().includes(q)))};
+ return rows.filter(r=>inc(k,r["Kegiatan"])&&inc(s,r["Satuan"])&&inc(t,stat(r))&&inc(l,lap(r))&&(!w.length||w.some(x=>sq(r).includes(+x)))&&(!q||(r["Kegiatan"]+" "+(r._b||"")+" "+r["Periode"]+" "+(r["Keterangan (alasan jadwal berubah / tidak terlaksana)"]||"")).toLowerCase().includes(q)))};
 window.fdesc=function(){const a=[],j=(id,lab,m)=>{const v=V(id);if(v.length)a.push(lab+": "+(m?v.map(m):v).join(", "))};
  j("fk","Kegiatan");j("fs","Satuan");j("ft","Status");j("fl","Laporan");j("fq","Triwulan",x=>["","I","II","III","IV"][x]);if($("q").value)a.push("Pencarian: "+$("q").value);return a.length?a.join(" · "):"Semua data (tanpa filter)"};
 window.pf=function(){const q=$("p-q").value.toLowerCase(),g=V("p-g"),j=V("p-j"),t=V("p-t"),d1=$("p-d").value,d2=$("p-d2").value;
@@ -412,7 +412,7 @@ function updW7(){if(!wc7||!wnil.length)return;const k=V("w-k"),c=V("w-c"),t=V("w
  wc7.data.labels=lb.map(x=>x.length>26?x.slice(0,25)+"…":x);
  wc7.data.datasets=cats.map(kt=>({label:kt,backgroundColor:kt=="Reform"?"#F5A623":"#1F5FAD",data:lb.map(l=>{const r=km.find(x=>x["Kategori"]==kt&&x["Uraian"]==l);return r?Math.round((wpc(r)||0)*10)/10:0})}));wc7.update()}
 function updW(){const f=wf();if(wc1){const c={};WS.forEach(s=>c[s]=0);f.forEach(r=>c[wst(r)]++);wc1.data.datasets[0].data=WS.map(s=>c[s]);wc1.update()}
- if(wc2){const kk=[...new Set(f.map(wkey))];$("c6").parentElement.style.height=(kk.length*46+90)+"px";
+ if(wc2){const kk=[...new Set(f.map(wkey))];$("c6").parentElement.style.height=Math.min(380,Math.max(300,kk.length*30+80))+"px";
   wc2.data.labels=kk.map(k=>{const p=k.split("|"),x=p[1].length>30?p[1].slice(0,29)+"…":p[1];return[p[0],x]});
   wc2.data.datasets.forEach((d,i)=>d.data=kk.map(k=>f.filter(r=>wkey(r)==k&&wst(r)==WS[i]).length));wc2.update()}
  updW7()}
@@ -427,6 +427,11 @@ hook("table",updSKM);hook("ptable",updP);hook("wtable",updW);hook("stable",updS)
 [[["w-q","w-k","w-c","w-t"],updW],[["s-q","s-k","s-t"],updS],[["m-q","m-k","m-t"],updM]].forEach(([ids,u])=>ids.forEach(i=>$(i).addEventListener("input",u)));
 $("p-d2").addEventListener("input",()=>{pn=25;ptable()});
 const pr=$("p-r").onclick;$("p-r").onclick=function(){$("p-d2").value="";return pr.apply(this,arguments)};
+// ---- kolom Bulan (SKM): isi otomatis ke bawah untuk sel gabungan; triwulan mingguan mengikuti bulan ----
+const sq0=window.sq,bp=r=>{const p=(r["Periode"]||"").toLowerCase(),i=BLN.findIndex(x=>p.startsWith(x));return i>=0?BLN[i][0].toUpperCase()+BLN[i].slice(1):""};
+window.sq=function(r){const p=(r["Periode"]||"").toLowerCase();if(/triwulan|semester/.test(p))return sq0(r);const bl=(r._b||"").toLowerCase(),i=BLN.findIndex(x=>bl.startsWith(x));return i>=0?[Math.floor(i/3)+1]:sq0(r)};
+const bfill=()=>{let last="",lk="";rows.forEach(r=>{const k=r["Kegiatan"];if(k!=lk){last="";lk=k}const bl=(r["Bulan"]||"").trim();if(bl)last=bl;r._b=bl||(/^minggu/i.test(r["Periode"]||"")?last:"")||bp(r)})};
+const rd=window.render;window.render=function(){bfill();return rd.apply(this,arguments)};
 })();
 </script>
 </body></html>
