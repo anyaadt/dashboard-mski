@@ -6,6 +6,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root{--blue:#1F5FAD;--navy:#143F73;--orange:#F5A623;--bg:#F4F7FB;--card:#fff;--text:#1d2939;--muted:#667085;--line:#E4E9F1;--green:#2E9E5B;--amber:#E39A1B;--red:#D64545;--gray:#98A2B3}
 *{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
@@ -447,6 +449,49 @@ const rd=window.render;window.render=function(){bfill();return rd.apply(this,arg
 const ao=(id,a)=>{const e=$(id),f=e.options[0].text;e.innerHTML='<option value="">'+esc(f)+'</option>'+a.map(v=>"<option>"+esc(v)+"</option>").join("")};
 const op=window.print.bind(window);
 window.print=function(){document.querySelectorAll("#pa table").forEach(t=>{if(t.dataset.sp)return;t.dataset.sp=1;const n=t.querySelector("thead tr").children.length,r=t.tHead.insertRow(0);r.className="sp";r.innerHTML='<th colspan="'+n+'"></th>';const r2=t.createTFoot().insertRow();r2.className="sp";r2.innerHTML='<td colspan="'+n+'"></td>'});op()};
+// ---- PDF langsung (jsPDF): tanpa dialog cetak, jadi tidak ada header/footer browser dan tidak miring ----
+const LOGO=["kemenkeu","djpb","kppn-medan-i","intress"];
+const loadLogo=n=>new Promise(res=>{const i=new Image();i.onload=()=>{try{const c=document.createElement("canvas");c.width=i.naturalWidth;c.height=i.naturalHeight;c.getContext("2d").drawImage(i,0,0);res({d:c.toDataURL("image/png"),w:i.naturalWidth,h:i.naturalHeight})}catch(e){res(null)}};i.onerror=()=>res(null);i.src="assets/"+n+".png"});
+const mkpdf=async o=>{
+ const d=new window.jspdf.jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+ if(typeof d.autoTable!="function")throw new Error("autoTable belum dimuat");
+ const im=await Promise.all(LOGO.map(loadLogo));let x=10;const H=10;
+ im.slice(0,3).forEach(m=>{if(!m)return;const w=H*m.w/m.h;d.addImage(m.d,"PNG",x,8,w,H);x+=w+4});
+ if(im[3]){const w=H*im[3].w/im[3].h;d.addImage(im[3].d,"PNG",287-w,8,w,H)}
+ d.setDrawColor(245,166,35);d.setLineWidth(.8);d.line(10,20,287,20);
+ d.setFont("helvetica","bold");d.setFontSize(13);d.setTextColor(20,63,115);d.text(o.title,10,27);
+ d.setFont("helvetica","normal");d.setFontSize(8);d.setTextColor(52,64,84);
+ const t=d.splitTextToSize("Filter: "+o.filter,277).concat(d.splitTextToSize(o.info,277));d.text(t,10,32);
+ const cs={};o.w.forEach((w,i)=>cs[i]={cellWidth:w});
+ d.autoTable({startY:32+t.length*3.6+2,head:[o.heads],body:o.rows.map(r=>r.map(v=>String(v==null?"":v))),theme:"grid",margin:{top:10,left:10,right:10,bottom:10},tableWidth:277,
+  styles:{font:"helvetica",fontSize:o.w.length>8?7:8,cellPadding:1.6,overflow:"linebreak",valign:"top",lineColor:[207,216,230],lineWidth:.2,textColor:[29,41,57]},
+  headStyles:{fillColor:[31,95,173],textColor:255,fontStyle:"bold"},alternateRowStyles:{fillColor:[244,247,251]},columnStyles:cs,
+  didParseCell:h=>{if(h.section=="body"&&h.column.index==o.link&&String(h.cell.raw||"").trim())h.cell.styles.textColor=[31,95,173]},
+  didDrawCell:h=>{if(h.section=="body"&&h.column.index==o.link){let u=String(h.cell.raw||"").trim();if(!u)return;if(!/^https?:\/\//i.test(u))u="https://"+u;d.link(h.cell.x,h.cell.y,h.cell.width,h.cell.height,{url:u})}}});
+ d.save(o.file)};
+const tgl=()=>new Date().toISOString().slice(0,10),now=()=>"Dicetak: "+new Date().toLocaleString("id-ID"),nod=()=>{alert("Tidak ada data untuk dicetak.");return false};
+const pdfBtn=(id,orig,build)=>{$(id).onclick=async function(){try{const o=build();if(o===false)return;if(!window.jspdf||!window.jspdf.jsPDF)throw new Error("jsPDF belum dimuat");await mkpdf(o)}catch(e){console.warn("PDF langsung gagal, memakai cetak browser:",e);orig()}}};
+pdfBtn("bp",pdf,()=>{const f=filtered();if(!f.length)return nod();const c={};ST.forEach(s=>c[s]=0);f.forEach(r=>c[stat(r)]=(c[stat(r)]||0)+1);
+ return{file:"SKM_KPPN_Medan_I_"+tgl()+".pdf",title:"Laporan Pelaksanaan SKM – KPPN Medan I",filter:fdesc(),info:`${now()} · Jumlah baris: ${f.length} · ${ST.map(s=>s+": "+c[s]).join(" · ")}`,link:11,
+  heads:["No","Kegiatan","Bulan","Satuan","Periode","Triwulan","Jadwal awal","Realisasi","Status pelaksanaan","Status laporan","Keterangan","Link bukti"],w:[8,50,16,14,20,14,20,20,24,15,30,46],
+  rows:f.map((r,i)=>[i+1,r["Kegiatan"],r._b||"–",r["Satuan"],r["Periode"],twl(r),r["Tanggal Jadwal Awal"]||"–",r["Tanggal Realisasi"]||"–",stat(r),lap(r),r[KET]||"",r["Link Bukti"]])}});
+pdfBtn("p-p",ppdf,()=>{const f=pf();if(!f.length)return nod();const c={};PS.forEach(s=>c[s]=0);f.forEach(r=>c[pst(r)]=(c[pst(r)]||0)+1);const a=[];
+ if($("p-g").value)a.push("Kelompok: "+$("p-g").value);if($("p-j").value)a.push("Jenis: "+$("p-j").value);if($("p-t").value)a.push("Status: "+$("p-t").value);if($("p-d").value||$("p-d2").value)a.push("Batas waktu: "+($("p-d").value||"…")+" s.d. "+($("p-d2").value||"…"));if($("p-q").value)a.push("Pencarian: "+$("p-q").value);
+ return{file:"PTKI_KPPN_Medan_I_"+tgl()+".pdf",title:"Laporan Pemantauan PTKI – KPPN Medan I",filter:a.length?a.join(" · "):"Semua data (tanpa filter)",info:`${now()} · Jumlah baris: ${f.length} · ${PS.map(s=>s+": "+c[s]).join(" · ")}`,link:11,
+  heads:["No","Kelompok","Tema pengawasan","Kegiatan","Jenis","Termin","Target lapor","Batas waktu","Status","Realisasi","Catatan","Link bukti"],w:[8,16,38,46,18,12,22,20,16,20,25,36],
+  rows:f.map((r,i)=>[i+1,r["Kelompok"],r["Tema Pengawasan"],r["Kegiatan"],r["Jenis Pemantauan"],r["Termin"]||"–",r["Target Waktu Pelaporan"],r["Batas Waktu"]||"–",pst(r),r["Tanggal Realisasi"]||"–",r["Catatan"]||"",r["Link Bukti"]])}});
+pdfBtn("w-p",wpdf,()=>{const f=wf(),y=wy();if(!f.length)return nod();
+ return{file:"WBK_WBBM_Pengungkit_"+y+"_KPPN_Medan_I_"+tgl()+".pdf",title:"Laporan Dokumen Pengungkit WBK/WBBM Tahun "+y+" – KPPN Medan I",filter:wdesc(),info:wsum(f),link:9,
+  heads:["No","Kategori","Komponen","Sub bab","Kode","Dokumen","Tahun","Status","Tanggal","Link bukti"],w:[8,18,36,36,12,80,12,16,20,39],
+  rows:f.map((r,i)=>[i+1,r["Kategori"],r["Komponen"],r["Sub Bab"],r["Kode"],r["Dokumen (Standar Dokumen)"],y,wst(r),wdate(r)||"–",r["Link Bukti "+y]])}});
+pdfBtn("s-p",spdf,()=>{const f=sf();if(!f.length)return nod();
+ return{file:"SMAP_KPPN_Medan_I_"+tgl()+".pdf",title:"Laporan Dokumen Pendukung SMAP (ISO 37001) – KPPN Medan I",filter:sdesc(),info:ssum(f),link:6,
+  heads:["No","Klausul","Sub-klausul","Nama klausul","Dokumen pendukung","Status","Link bukti"],w:[10,15,20,55,85,17,75],
+  rows:f.map((r,i)=>[i+1,r["Klausul"],r["Sub-klausul"],r["Nama Klausul"],r["Dokumen Pendukung"],sst(r),r["Link Bukti"]])}});
+pdfBtn("m-p",mpdf,()=>{const f=mf();if(!f.length)return nod();
+ return{file:"Manajemen_Risiko_KPPN_Medan_I_"+tgl()+".pdf",title:"Laporan Monitoring Mitigasi Risiko – KPPN Medan I",filter:mdesc(),info:msum(f),link:5,
+  heads:["No","Kejadian risiko","Rencana aksi mitigasi risiko","Penanggung jawab","Dokumen","Link bukti"],w:[12,70,85,45,18,47],
+  rows:f.map(r=>[r["No"],r["Kejadian Risiko"],r["Rencana Aksi Mitigasi Risiko"],r["Penanggung Jawab"],mst(r),r["Link Bukti"]])}});
 hook("render",()=>ao("fl",LS));hook("srender",()=>ao("s-t",SMS));hook("mrender",()=>ao("m-t",MRS));
 })();
 </script>
