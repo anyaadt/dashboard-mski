@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard InTress – KPPN Medan I</title>
+<link rel="icon" href="assets/intress.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+:root{--blue:#1F5FAD;--navy:#143F73;--orange:#F5A623;--bg:#F4F7FB;--card:#fff;--text:#1d2939;--muted:#667085;--line:#E4E9F1;--green:#2E9E5B;--amber:#E39A1B;--red:#D64545;--gray:#98A2B3}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:15px}
+header{background:#fff;border-bottom:4px solid var(--orange);padding:10px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header img{height:46px;width:auto}.hl{display:flex;align-items:center;gap:12px}.hr{margin-left:auto}
+.title{background:linear-gradient(90deg,var(--navy),var(--blue));color:#fff;padding:18px 20px}.title h1{margin:0;font-size:22px}.title p{margin:4px 0 0;opacity:.9;font-size:14px}
+nav{background:#fff;border-bottom:1px solid var(--line);display:flex;gap:4px;padding:0 16px;overflow-x:auto}
+nav button{border:0;background:none;padding:13px 14px;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button.on{color:var(--blue);font-weight:600;border-color:var(--blue)}nav button:disabled{opacity:.5;cursor:not-allowed}
+main{max-width:1200px;margin:0 auto;padding:18px 16px 40px}
+.grid{display:grid;gap:14px}.kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.two{grid-template-columns:1fr 1.6fr}
+@media(max-width:800px){.two{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.kpi .n{font-size:30px;font-weight:700;line-height:1.1}.kpi .l{color:var(--muted);font-size:13px;margin-top:4px}.kpi{border-left:5px solid var(--blue)}
+.k-g{border-color:var(--green)}.k-a{border-color:var(--amber)}.k-r{border-color:var(--red)}.k-o{border-color:var(--orange)}
+.bar{height:12px;background:#E9EEF5;border-radius:99px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--orange));width:0;transition:width .6s}
+h2{font-size:16px;margin:0 0 10px;color:var(--navy)}.sub{color:var(--muted);font-size:13px;margin:-6px 0 10px}
+.chartbox{position:relative;height:300px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.filters input,.filters select{padding:9px 10px;border:1px solid #cfd8e6;border-radius:8px;font-size:14px;background:#fff;min-width:150px;flex:1}
+.filters button{padding:9px 14px;border:0;border-radius:8px;background:var(--blue);color:#fff;cursor:pointer;font-size:14px}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:780px}
+th{background:var(--blue);color:#fff;text-align:left;padding:10px;font-size:13px;position:sticky;top:0}td{padding:9px 10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+tr:nth-child(even) td{background:#FAFBFD}
+.b{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.s-ok{background:#E3F5EB;color:#1C7A44}.s-chg{background:#FFF1D6;color:#9A6200}.s-no{background:#FBE4E4;color:#B02A2A}.s-wait{background:#EEF1F6;color:#52607A}
+.more{display:block;margin:12px auto 0;padding:9px 18px;border:1px solid var(--blue);color:var(--blue);background:#fff;border-radius:8px;cursor:pointer}
+.msg{padding:14px;border-radius:10px;background:#FFF4E0;border:1px solid #F5D9A0;margin-bottom:14px}.hide{display:none}
+.acts{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}.act{border:1px solid var(--line);border-radius:10px;padding:12px}.act b{display:block;margin-bottom:6px}.act small{color:var(--muted);display:block;margin-top:3px}
+.filters .x{background:#2E9E5B}.filters .p{background:var(--orange);color:#1d2939;font-weight:600}
+#pa{display:none}
+@page{size:A4 landscape;margin:10mm}
+@media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{background:#fff;font-size:11px}
+body>*:not(#pa){display:none!important}#pa{display:block!important}
+#pa .ph{display:flex;align-items:center;gap:10px;border-bottom:3px solid #F5A623;padding-bottom:6px;margin-bottom:8px}#pa .ph img{height:34px}#pa .ph .r{margin-left:auto}
+#pa h1{font-size:16px;margin:4px 0;color:#143F73}#pa p{margin:2px 0;font-size:11px;color:#344054}
+#pa table{width:100%;min-width:0;table-layout:fixed;margin-top:8px}#pa th,#pa td{font-size:10px;padding:4px 5px;border:1px solid #cfd8e6;overflow-wrap:anywhere;word-break:break-word}
+#pa th{position:static;background:#1F5FAD!important;color:#fff}#pa thead{display:table-header-group}#pa tr{break-inside:avoid;page-break-inside:avoid}
+#pa tr:nth-child(even) td{background:#F4F7FB}}
+footer{text-align:center;color:var(--muted);font-size:12.5px;padding:18px}
+
+body,button,input,select{font-family:"Plus Jakarta Sans","Segoe UI",Roboto,Arial,sans-serif}
+.two>*{min-width:0}.pb{height:10px;background:#EEF2F7;border-radius:99px;overflow:hidden;min-width:90px}.pb i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--orange))}
+.mt td{border:1px solid #DDE3EC}.mt td.mg{background:#F4F7FB;vertical-align:top}.mt tr:nth-child(even) td{background:#fff}.mt tr:nth-child(even) td.mg{background:#F4F7FB}
+</style></head><body>
+<header>
+ <div class="hl"><img src="assets/kemenkeu.png" alt="Kementerian Keuangan"><img src="assets/djpb.png" alt="DJPb"><img src="assets/kppn-medan-i.png" alt="KPPN Medan I" style="height:42px"></div>
+ <div class="hr"><img src="assets/intress.png" alt="InTress" style="height:42px"></div>
+</header>
+<div class="title"><h1>Dashboard Pemantauan Internal – KPPN Medan I</h1><p id="sub">Standardisasi Kegiatan Manajemen (SKM) · Tahun 2026</p></div>
+<nav><button class="on" data-v="skm">SKM</button><button data-v="ptki">PTKI</button><button data-v="wbk">WBK/WBBM</button><button disabled title="Segera hadir">SMM</button><button data-v="smap">SMAP</button><button data-v="mr">Manajemen Risiko</button><button disabled>Pembinaan</button></nav>
+<main>
+<div id="v-skm">
+<div id="err" class="msg hide"></div>
+<section class="grid kpis" id="kpis"></section>
+<section class="card" style="margin:14px 0"><h2>Progres pelaksanaan kegiatan</h2><div class="sub" id="ptxt"></div><div class="bar"><i id="pbar"></i></div></section>
+<section class="grid two">
+ <div class="card"><h2>Komposisi status</h2><div class="sub">Dari seluruh jadwal kegiatan tahun ini</div><div class="chartbox"><canvas id="c1"></canvas></div></div>
+ <div class="card"><h2>Status per kegiatan</h2><div class="sub">Setiap batang = satu kegiatan SKM</div><div class="chartbox" style="height:380px"><canvas id="c2"></canvas></div></div>
+</section>
+<section class="card" style="margin-top:14px">
+ <h2>Tabel pelaksanaan kegiatan</h2>
+ <div class="filters">
+  <input id="q" placeholder="Cari kegiatan atau keterangan…">
+  <select id="fk"><option value="">Semua kegiatan</option></select>
+  <select id="fs"><option value="">Semua satuan</option></select>
+  <select id="fq"><option value="">Semua triwulan</option><option value="1">Triwulan I</option><option value="2">Triwulan II</option><option value="3">Triwulan III</option><option value="4">Triwulan IV</option></select>
+  <select id="ft"><option value="">Semua status</option></select>
+  <select id="fl"><option value="">Semua laporan</option><option>Sudah</option><option>Belum</option></select>
+  <button id="rst">Reset</button><button id="bx" class="x">Unduh Excel</button><button id="bp" class="p">Unduh PDF</button>
+ </div>
+ <div class="tw"><table><thead><tr><th>Kegiatan</th><th>Periode</th><th>Triwulan</th><th>Jadwal awal</th><th>Realisasi</th><th>Status</th><th>Laporan</th><th>Link bukti</th></tr></thead><tbody id="tb"></tbody></table></div>
+ <div class="sub" id="cnt" style="margin-top:10px"></div><button class="more hide" id="more">Tampilkan lebih banyak</button>
+</section>
+<section class="card" style="margin-top:14px"><h2>Daftar kegiatan SKM (acuan)</h2><div class="sub">Frekuensi minimal dan penanggung jawab tiap kegiatan</div><div class="acts" id="acts"></div></section>
+</div>
+<div id="v-ptki" class="hide">
+<div id="perr" class="msg hide"></div>
+<section class="grid kpis" id="pk"></section>
+<section class="card" style="margin:14px 0"><h2>Progres pemantauan</h2><div class="sub" id="ptx"></div><div class="bar"><i id="pbr"></i></div></section>
+<section class="grid two">
+ <div class="card"><h2>Komposisi status</h2><div class="sub">“Terlambat” = belum selesai padahal batas waktunya sudah lewat</div><div class="chartbox"><canvas id="c3"></canvas></div></div>
+ <div class="card"><h2>Status per jenis pemantauan</h2><div class="sub">Bulanan, triwulanan, semesteran, tahunan, dan tematik</div><div class="chartbox"><canvas id="c4"></canvas></div></div>
+</section>
+<section class="card" style="margin-top:14px"><h2>Tabel pemantauan PTKI</h2>
+ <div class="filters"><input id="p-q" placeholder="Cari tema atau kegiatan…"><select id="p-g"><option value="">Semua kelompok</option></select><select id="p-j"><option value="">Semua jenis</option></select><select id="p-t"><option value="">Semua status</option></select><label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#667085;white-space:nowrap">Batas waktu <input type="date" id="p-d" style="min-width:140px"> s.d. <input type="date" id="p-d2" style="min-width:140px"></label><button id="p-r">Reset</button><button id="p-x" class="x">Unduh Excel</button><button id="p-p" class="p">Unduh PDF</button></div>
+ <div class="tw"><table><thead><tr><th>Tema / kegiatan</th><th>Jenis</th><th>Termin</th><th>Target lapor</th><th>Batas waktu</th><th>Status</th><th>Realisasi</th><th>Link bukti</th></tr></thead><tbody id="ptb"></tbody></table></div>
+ <div class="sub" id="pcn" style="margin-top:10px"></div><button class="more hide" id="pm">Tampilkan lebih banyak</button>
+</section>
+<section class="card" style="margin-top:14px"><h2>Daftar kegiatan PTKI (acuan)</h2><div class="sub">Unit pelaksana, waktu, tujuan, dan objek tiap kegiatan menurut KEP-82 (hanya UKI-III)</div><div class="acts" id="pacts"></div></section>
+</div>
+<div id="v-wbk" class="hide">
+<div id="werr" class="msg hide"></div>
+<section class="grid kpis" id="wnl"></section>
+<section class="card" style="margin:14px 0"><h2>Nilai per komponen pengungkit</h2><div class="sub">Persentase nilai terhadap bobot, Pemenuhan dibanding Reform</div><div class="chartbox" style="height:340px"><canvas id="c7"></canvas></div></section>
+<section class="grid kpis" id="wk"></section>
+<section class="card" style="margin:14px 0"><h2>Kelengkapan dokumen pengungkit</h2><div class="sub" id="wtx"></div><div class="bar"><i id="wbr"></i></div></section>
+<section class="grid two">
+ <div class="card"><h2>Komposisi status dokumen</h2><div class="sub">Sudah ada, sebagian, atau belum ada</div><div class="chartbox"><canvas id="c5"></canvas></div></div>
+ <div class="card"><h2>Status dokumen per komponen</h2><div class="sub">Setiap batang = satu komponen</div><div class="chartbox" style="height:420px"><canvas id="c6"></canvas></div></div>
+</section>
+<section class="card" style="margin-top:14px"><h2>Tabel dokumen pengungkit WBK/WBBM</h2>
+ <div class="filters"><input id="w-q" placeholder="Cari dokumen atau sub bab…"><select id="w-k"><option value="">Semua kategori</option></select><select id="w-c"><option value="">Semua komponen</option></select><label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#667085">Tahun <select id="w-y" style="min-width:90px"></select></label><select id="w-t"><option value="">Semua status</option></select><button id="w-r">Reset</button><button id="w-x" class="x">Unduh Excel</button><button id="w-p" class="p">Unduh PDF</button></div>
+ <div class="tw"><table class="mt"><thead><tr><th>Komponen</th><th>Persentase</th><th>Sub bab</th><th>Dokumen</th><th>Status dokumen</th><th>Status sub bab</th><th>Link bukti</th></tr></thead><tbody id="wtb"></tbody></table></div>
+ <div class="sub" id="wcn" style="margin-top:10px"></div><button class="more hide" id="wm">Tampilkan lebih banyak</button>
+</section>
+</div>
+<div id="v-smap" class="hide">
+<div id="serr" class="msg hide"></div>
+<section class="grid kpis" id="sk"></section>
+<section class="card" style="margin:14px 0"><h2>Kelengkapan dokumen pendukung SMAP</h2><div class="sub" id="stx"></div><div class="bar"><i id="sbr"></i></div></section>
+<section class="grid two">
+ <div class="card"><h2>Komposisi status dokumen</h2><div class="sub">Sudah dan belum ada seluruh dokumen pendukung</div><div class="chartbox"><canvas id="c9"></canvas></div></div>
+ <div class="card"><h2>Status dokumen per klausul</h2><div class="sub">Setiap batang = satu klausul ISO 37001</div><div class="chartbox"><canvas id="c10"></canvas></div></div>
+</section>
+<section class="card" style="margin-top:14px"><h2>Tabel dokumen pendukung SMAP (ISO 37001)</h2>
+ <div class="filters"><input id="s-q" placeholder="Cari dokumen atau nama klausul…"><select id="s-k"><option value="">Semua klausul</option></select><select id="s-t"><option value="">Semua status</option><option>Sudah</option><option>Belum</option></select><button id="s-r">Reset</button><button id="s-x" class="x">Unduh Excel</button><button id="s-p" class="p">Unduh PDF</button></div>
+ <div class="tw"><table class="mt"><thead><tr><th>Klausul</th><th>Sub-klausul</th><th>Dokumen pendukung</th><th>Status dokumen</th><th>Status sub-klausul</th><th>Link bukti</th></tr></thead><tbody id="stb"></tbody></table></div>
+ <div class="sub" id="scn" style="margin-top:10px"></div>
+</section>
+</div>
+<div id="v-mr" class="hide">
+<div id="merr" class="msg hide"></div>
+<section class="grid kpis" id="mk"></section>
+<section class="card" style="margin:14px 0"><h2>Kelengkapan dokumen manajemen risiko</h2><div class="sub" id="mtx"></div><div class="bar"><i id="mbr"></i></div></section>
+<section class="grid two">
+ <div class="card"><h2>Komposisi status dokumen</h2><div class="sub">Sudah dan belum ada dokumen rencana aksi mitigasi</div><div class="chartbox"><canvas id="c11"></canvas></div></div>
+ <div class="card"><h2>Status dokumen per penanggung jawab</h2><div class="sub">Rencana aksi dihitung untuk tiap unit yang bertanggung jawab</div><div class="chartbox"><canvas id="c12"></canvas></div></div>
+</section>
+<section class="card" style="margin-top:14px"><h2>Tabel monitoring mitigasi risiko</h2>
+ <div class="filters"><input id="m-q" placeholder="Cari kejadian risiko atau rencana aksi…"><select id="m-k"><option value="">Semua penanggung jawab</option></select><select id="m-t"><option value="">Semua status</option><option>Sudah</option><option>Belum</option></select><button id="m-r">Reset</button><button id="m-x" class="x">Unduh Excel</button><button id="m-p" class="p">Unduh PDF</button></div>
+ <div class="tw"><table><thead><tr><th>No</th><th>Kejadian risiko</th><th>Rencana aksi mitigasi risiko</th><th>Penanggung jawab</th><th>Dokumen</th><th>Link bukti</th></tr></thead><tbody id="mtb"></tbody></table></div>
+ <div class="sub" id="mcn" style="margin-top:10px"></div>
+</section>
+</div>
+</main>
+<div id="pa"></div>
+<footer>Data diperbarui otomatis dari Google Sheets · <span id="upd">memuat…</span> · <a href="#" id="rf">Muat ulang data</a></footer>
+<script>
+// === PENGATURAN: ID Google Sheets (bagian di antara /d/ dan /edit pada link spreadsheet) ===
+const SHEET_ID="19I8xpKC6gJxvUbfCgRw9saeyN7MAUdX9UIuqrkIJc30";
+const ST=["Terlaksana sesuai jadwal","Terlaksana jadwal berubah","Tidak terlaksana","Belum dilaksanakan"];
+const COL={"Terlaksana sesuai jadwal":"#2E9E5B","Terlaksana jadwal berubah":"#F5A623","Tidak terlaksana":"#D64545","Belum dilaksanakan":"#B8C2D3"};
+const CLS={"Terlaksana sesuai jadwal":"s-ok","Terlaksana jadwal berubah":"s-chg","Tidak terlaksana":"s-no","Belum dilaksanakan":"s-wait"};
+const $=id=>document.getElementById(id);let rows=[],acts=[],shown=25,ch1,ch2;
+Chart.defaults.font.family='"Plus Jakarta Sans","Segoe UI",Arial,sans-serif';
+function csv(t){const o=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){const x=t[i];if(q){if(x=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=x}else if(x=='"')q=true;else if(x==","){r.push(c);c=""}else if(x=="\n"||x=="\r"){if(x=="\r"&&t[i+1]=="\n")i++;r.push(c);o.push(r);r=[];c=""}else c+=x}if(c!==""||r.length){r.push(c);o.push(r)}return o}
+async function sheet(n){const u=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(n)}`;const r=await fetch(u);if(!r.ok)throw new Error(n);const a=csv(await r.text());const h=a[0].map(s=>s.trim());return a.slice(1).filter(x=>x.some(v=>v.trim())).map(x=>Object.fromEntries(h.map((k,i)=>[k,(x[i]||"").trim()])))}
+async function sheetAny(names,key){for(const n of names){try{const d=await sheet(n);if(d.length&&key in d[0])return d}catch(e){}}throw new Error(names.join("/"))}
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
+const stat=r=>ST.includes(r["Status Pelaksanaan"])?r["Status Pelaksanaan"]:"Belum dilaksanakan";
+const lap=r=>(r["Status Laporan"]||"Belum")=="Sudah"?"Sudah":"Belum";
+function fill(id,vals,first){const s=$(id);const cur=s.value;s.innerHTML=`<option value="">${first}</option>`+vals.map(v=>`<option>${esc(v)}</option>`).join("");s.value=cur}
+const RM={I:1,II:2,III:3,IV:4},BLN=["januari","februari","maret","april","mei","juni","juli","agustus","september","oktober","november","desember"];
+function sq(r){const p=(r["Periode"]||"").toLowerCase();let m=/triwulan\s+(iv|iii|ii|i)\b/.exec(p);if(m)return[RM[m[1].toUpperCase()]];m=/semester\s+(ii|i)\b/.exec(p);if(m)return m[1]=="ii"?[3,4]:[1,2];m=/minggu ke-(\d+)/.exec(p);if(m)return[Math.min(4,Math.ceil(+m[1]/13))];const b=BLN.findIndex(x=>p.startsWith(x));return b>=0?[Math.floor(b/3)+1]:[]}
+const twl=r=>{const q=sq(r),R=["","I","II","III","IV"];return q.length?"Triwulan "+R[q[0]]+(q.length>1?"–"+R[q[q.length-1]]:""):"–"};
+function filtered(){const q=$("q").value.toLowerCase(),k=$("fk").value,s=$("fs").value,t=$("ft").value,l=$("fl").value,w=$("fq").value;
+ return rows.filter(r=>(!k||r["Kegiatan"]==k)&&(!s||r["Satuan"]==s)&&(!t||stat(r)==t)&&(!l||lap(r)==l)&&(!w||sq(r).includes(+w))&&(!q||(r["Kegiatan"]+" "+r["Periode"]+" "+(r["Keterangan (alasan jadwal berubah / tidak terlaksana)"]||"")).toLowerCase().includes(q)))}
+function table(){const f=filtered();$("tb").innerHTML=f.slice(0,shown).map(r=>{const s=stat(r);return`<tr><td>${esc(r["Kegiatan"])}</td><td>${esc(r["Periode"])}</td><td>${twl(r)}</td><td>${esc(r["Tanggal Jadwal Awal"]||"–")}</td><td>${esc(r["Tanggal Realisasi"]||"–")}</td><td><span class="b ${CLS[s]}">${s}</span></td><td><span class="b ${lap(r)=="Sudah"?"s-ok":"s-wait"}">${lap(r)}</span></td><td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||`<tr><td colspan="8">Tidak ada data yang cocok.</td></tr>`;
+ $("cnt").textContent=`Menampilkan ${Math.min(shown,f.length)} dari ${f.length} baris`;$("more").classList.toggle("hide",f.length<=shown)}
+function render(){const n=rows.length,c={};ST.forEach(s=>c[s]=0);rows.forEach(r=>c[stat(r)]++);const done=c[ST[0]]+c[ST[1]],lp=rows.filter(r=>lap(r)=="Sudah").length,pct=n?Math.round(done/n*100):0;
+ $("kpis").innerHTML=[["Total jadwal kegiatan",n,""],["Sudah terlaksana",done,"k-g"],["Jadwal berubah",c[ST[1]],"k-o"],["Tidak terlaksana",c[ST[2]],"k-r"],["Belum dilaksanakan",c[ST[3]],"k-a"],["Laporan sudah dibuat",lp,"k-g"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
+ $("pbar").style.width=pct+"%";$("ptxt").textContent=`${done} dari ${n} jadwal sudah terlaksana (${pct}%). Laporan selesai: ${lp} dari ${done} kegiatan terlaksana.`;
+ const names=[...new Set(rows.map(r=>r["Kegiatan"]))];
+ if(ch1)ch1.destroy();ch1=new Chart($("c1"),{type:"doughnut",data:{labels:ST,datasets:[{data:ST.map(s=>c[s]),backgroundColor:ST.map(s=>COL[s]),borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
+ if(ch2)ch2.destroy();ch2=new Chart($("c2"),{type:"bar",data:{labels:names.map(x=>x.length>34?x.slice(0,33)+"…":x),datasets:ST.map(s=>({label:s,backgroundColor:COL[s],data:names.map(nm=>rows.filter(r=>r["Kegiatan"]==nm&&stat(r)==s).length)}))},options:{indexAxis:"y",maintainAspectRatio:false,scales:{x:{stacked:true,ticks:{precision:0}},y:{stacked:true,ticks:{font:{size:11}}}},plugins:{legend:{position:"bottom"}}}});
+ fill("fk",names,"Semua kegiatan");fill("fs",[...new Set(rows.map(r=>r["Satuan"]))],"Semua satuan");fill("ft",ST,"Semua status");table();
+ $("acts").innerHTML=acts.map(a=>`<div class="act"><b>${esc(a["No."])}. ${esc(a["Substansi Penguatan"])}</b><span class="b s-wait">${esc(a["Frekuensi"])} per ${esc(a["Satuan"])}</span><small>PIC: ${esc(a["PIC"])}</small><small>Peserta: ${esc(a["Peserta"])}</small></div>`).join("")}
+async function load(){try{[rows,acts]=await Promise.all([sheet("SKM_Pelaksanaan"),sheet("SKM_Induk")]);rows=rows.filter(r=>r["Kegiatan"]);$("err").classList.add("hide");render();$("upd").textContent="dimuat "+new Date().toLocaleString("id-ID")}
+ catch(e){$("err").classList.remove("hide");$("err").innerHTML="Data belum bisa dimuat. Pastikan Google Sheets dibagikan dengan akses “Siapa saja yang memiliki link” (Viewer) dan nama tab SKM_Pelaksanaan serta SKM_Induk tidak diubah.";$("upd").textContent="gagal memuat"}}
+function fdesc(){const a=[];if($("fk").value)a.push("Kegiatan: "+$("fk").value);if($("fs").value)a.push("Satuan: "+$("fs").value);if($("ft").value)a.push("Status: "+$("ft").value);if($("fl").value)a.push("Laporan: "+$("fl").value);if($("fq").value)a.push("Triwulan: "+["","I","II","III","IV"][$("fq").value]);if($("q").value)a.push("Pencarian: "+$("q").value);return a.length?a.join(" · "):"Semua data (tanpa filter)"}
+const KET="Keterangan (alasan jadwal berubah / tidak terlaksana)";
+const STC={"Terlaksana sesuai jadwal":["FFE3F5EB","FF1C7A44"],"Terlaksana jadwal berubah":["FFFFF1D6","FF9A6200"],"Tidak terlaksana":["FFFBE4E4","FFB02A2A"],"Belum dilaksanakan":["FFEEF1F6","FF52607A"],Sudah:["FFE3F5EB","FF1C7A44"],Proses:["FFFFF1D6","FF9A6200"],Belum:["FFEEF1F6","FF52607A"],Terlambat:["FFFBE4E4","FFB02A2A"],Sebagian:["FFFFF1D6","FF9A6200"]};
+async function exportX(o){try{
+ const wb=new ExcelJS.Workbook(),n=o.headers.length,ln={style:"thin",color:{argb:"FFBFBFBF"}},bd={top:ln,left:ln,bottom:ln,right:ln};
+ const ws=wb.addWorksheet(o.sheet,{views:[{state:"frozen",ySplit:6}],pageSetup:{orientation:"landscape",paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:0,printTitlesRow:"6:6"}});
+ ws.columns=o.widths.map(w=>({width:w}));
+ try{const im=[];for(const nm of ["kemenkeu","djpb","kppn-medan-i","intress"]){const r=await fetch("assets/"+nm+".png");im.push(await createImageBitmap(await r.blob()))}
+  const H=56,g=18,w=im.map(b=>Math.round(b.width*H/b.height)),W=w.reduce((a,b)=>a+b,0)+g*(im.length-1),cv=document.createElement("canvas");cv.width=W;cv.height=H;const cx=cv.getContext("2d");let x=0;im.forEach((b,i)=>{cx.drawImage(b,x,0,w[i],H);x+=w[i]+g});
+  const buf=await (await new Promise(r=>cv.toBlob(r))).arrayBuffer();ws.addImage(wb.addImage({buffer:buf,extension:"png"}),{tl:{col:0,row:0},ext:{width:W,height:H}})}catch(e){}
+ ws.getRow(1).height=48;for(let c=1;c<=n;c++)ws.getCell(1,c).border={bottom:{style:"medium",color:{argb:"FFF5A623"}}};
+ const put=(r,v,f)=>{ws.mergeCells(r,1,r,n);const c=ws.getCell(r,1);c.value=v;c.font=Object.assign({name:"Arial",size:10},f);c.alignment={vertical:"middle",wrapText:true}};
+ put(2,o.title,{size:14,bold:true,color:{argb:"FF143F73"}});put(3,"Filter: "+o.filter,{});put(4,o.info,{});
+ const hr=ws.getRow(6);hr.height=28;o.headers.forEach((h,i)=>{const c=hr.getCell(i+1);c.value=h;c.font={name:"Arial",size:10,bold:true,color:{argb:"FFFFFFFF"}};c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1F5FAD"}};c.alignment={horizontal:"center",vertical:"middle",wrapText:true};c.border=bd});
+ o.rows.forEach((r,ri)=>{const row=ws.getRow(7+ri);r.forEach((v,i)=>{const c=row.getCell(i+1),s=v==null?"":String(v);let f={name:"Arial",size:10};
+  if(/^https?:\/\//.test(s)){c.value={text:"Buka bukti",hyperlink:s};f.color={argb:"FF1F5FAD"};f.underline=true}else c.value=i==0?+v:s;
+  c.alignment={vertical:"top",wrapText:true,horizontal:i==0?"center":"left"};c.border=bd;if(ri%2)c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF4F7FB"}};
+  const k=STC[s];if(o.stat.includes(i)&&k){c.fill={type:"pattern",pattern:"solid",fgColor:{argb:k[0]}};f={name:"Arial",size:10,bold:true,color:{argb:k[1]}};c.alignment.horizontal="center"}c.font=f})});
+ ws.autoFilter={from:{row:6,column:1},to:{row:6+o.rows.length,column:n}};
+ const bl=new Blob([await wb.xlsx.writeBuffer()],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download=o.file;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)
+}catch(e){alert("Gagal membuat file Excel: "+e.message)}}
+function xls(){const f=filtered();if(!f.length){alert("Tidak ada data untuk diunduh.");return}
+ const c={};ST.forEach(s=>c[s]=0);f.forEach(r=>c[stat(r)]++);
+ exportX({sheet:"SKM",file:"SKM_KPPN_Medan_I_"+new Date().toISOString().slice(0,10)+".xlsx",title:"Laporan Pelaksanaan SKM – KPPN Medan I",filter:fdesc(),info:`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah baris: ${f.length} · ${ST.map(s=>s+": "+c[s]).join(" · ")}`,
+  headers:["No","Kegiatan","Satuan","Periode","Triwulan","Tanggal Jadwal Awal","Tanggal Realisasi","Status Pelaksanaan","Status Laporan","Keterangan","Link Bukti"],widths:[6,52,11,22,16,16,16,26,14,44,16],stat:[7,8],
+  rows:f.map((r,i)=>[i+1,r["Kegiatan"],r["Satuan"],r["Periode"],twl(r),r["Tanggal Jadwal Awal"],r["Tanggal Realisasi"],stat(r),lap(r),r[KET],r["Link Bukti"]])})}
+function pdf(){const f=filtered();if(!f.length){alert("Tidak ada data untuk dicetak.");return}
+ const c={};ST.forEach(s=>c[s]=0);f.forEach(r=>c[stat(r)]++);
+ $("pa").innerHTML=`<div class="ph"><img src="assets/kemenkeu.png" alt=""><img src="assets/djpb.png" alt=""><img src="assets/kppn-medan-i.png" alt=""><img class="r" src="assets/intress.png" alt=""></div><h1>Laporan Pelaksanaan SKM – KPPN Medan I</h1><p>Filter: ${esc(fdesc())}</p><p>Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah baris: ${f.length} · ${ST.map(s=>s+": "+c[s]).join(" · ")}</p><table><colgroup><col style="width:4%"><col style="width:25%"><col style="width:12%"><col style="width:10%"><col style="width:10%"><col style="width:13%"><col style="width:8%"><col style="width:18%"></colgroup><thead><tr><th>No</th><th>Kegiatan</th><th>Periode</th><th>Jadwal awal</th><th>Realisasi</th><th>Status</th><th>Laporan</th><th>Keterangan</th></tr></thead><tbody>${f.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r["Kegiatan"])}</td><td>${esc(r["Periode"])}</td><td>${esc(r["Tanggal Jadwal Awal"]||"–")}</td><td>${esc(r["Tanggal Realisasi"]||"–")}</td><td>${stat(r)}</td><td>${lap(r)}</td><td>${esc(r[KET]||"")}</td></tr>`).join("")}</tbody></table>`;
+ const imgs=[...$("pa").querySelectorAll("img")];Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>window.print(),150))}
+$("bx").onclick=xls;$("bp").onclick=pdf;
+// ===== PTKI =====
+const PS=["Sudah","Proses","Belum","Terlambat"],PCOL={Sudah:"#2E9E5B",Proses:"#F5A623",Belum:"#B8C2D3",Terlambat:"#D64545"},PCLS={Sudah:"s-ok",Proses:"s-chg",Belum:"s-wait",Terlambat:"s-no"};
+let prow=[],pn=25,pc3,pc4;
+function pdt(s){const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((s||"").trim());return m?new Date(+m[3],+m[2]-1,+m[1],23,59,59):null}
+const pbase=r=>["Sudah","Proses"].includes(r["Status"])?r["Status"]:"Belum";
+const pst=r=>{if(pbase(r)=="Sudah")return"Sudah";const d=pdt(r["Batas Waktu"]);return d&&d<new Date()?"Terlambat":pbase(r)};
+const pday=r=>{const x=pdt(r["Batas Waktu"]);return x?`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`:""};
+function pf(){const q=$("p-q").value.toLowerCase(),g=$("p-g").value,j=$("p-j").value,t=$("p-t").value,d=$("p-d").value;return prow.filter(r=>(!g||r["Kelompok"]==g)&&(!j||r["Jenis Pemantauan"]==j)&&(!t||pst(r)==t)&&(!d||pday(r)==d)&&(!q||(r["Tema Pengawasan"]+" "+r["Kegiatan"]+" "+r["Catatan"]).toLowerCase().includes(q)))}
+function ptable(){const f=pf();$("ptb").innerHTML=f.slice(0,pn).map(r=>{const s=pst(r);return`<tr><td><b>${esc(r["Tema Pengawasan"])}</b><br><small style="color:#667085">${esc(r["Kegiatan"])}</small></td><td>${esc(r["Jenis Pemantauan"])}</td><td>${esc(r["Termin"]||"–")}</td><td>${esc(r["Target Waktu Pelaporan"])}</td><td>${esc(r["Batas Waktu"]||"–")}</td><td><span class="b ${PCLS[s]}">${s}</span></td><td>${esc(r["Tanggal Realisasi"]||"–")}</td><td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||'<tr><td colspan="8">Tidak ada data yang cocok.</td></tr>';
+ $("pcn").textContent=`Menampilkan ${Math.min(pn,f.length)} dari ${f.length} baris`;$("pm").classList.toggle("hide",f.length<=pn)}
+function prender(){const n=prow.length,c={};PS.forEach(s=>c[s]=0);prow.forEach(r=>c[pst(r)]++);const pct=n?Math.round(c.Sudah/n*100):0;
+ $("pk").innerHTML=[["Total tenggat laporan",n,""],["Sudah selesai",c.Sudah,"k-g"],["Sedang proses",c.Proses,"k-o"],["Belum dikerjakan",c.Belum,"k-a"],["Terlambat",c.Terlambat,"k-r"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
+ $("pbr").style.width=pct+"%";$("ptx").textContent=`${c.Sudah} dari ${n} tenggat laporan sudah selesai (${pct}%).`;
+ const js=[...new Set(prow.map(r=>r["Jenis Pemantauan"]))];
+ if(pc3)pc3.destroy();pc3=new Chart($("c3"),{type:"doughnut",data:{labels:PS,datasets:[{data:PS.map(s=>c[s]),backgroundColor:PS.map(s=>PCOL[s]),borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
+ if(pc4)pc4.destroy();pc4=new Chart($("c4"),{type:"bar",data:{labels:js,datasets:PS.map(s=>({label:s,backgroundColor:PCOL[s],data:js.map(j=>prow.filter(r=>r["Jenis Pemantauan"]==j&&pst(r)==s).length)}))},options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,ticks:{precision:0}}},plugins:{legend:{position:"bottom"}}}});
+ fill("p-g",[...new Set(prow.map(r=>r["Kelompok"]))],"Semua kelompok");fill("p-j",js,"Semua jenis");fill("p-t",PS,"Semua status");ptable()}
+let pind=[];
+function pacts(){$("pacts").innerHTML=pind.length?pind.map(a=>`<div class="act"><b>${a["No."]?esc(a["No."])+". ":""}${esc(a["Tema Pengawasan"])}</b><span class="b s-wait">${esc(a["Unit Pelaksana Kegiatan"])}</span><small>Kegiatan: ${esc(a["Rincian Kegiatan Pengawasan"])}</small><small>Waktu pelaksanaan: ${esc(a["Waktu Pelaksanaan Kegiatan Pengawasan"])} · Target lapor: ${esc(a["Target Waktu Pelaporan"])}</small><details style="margin-top:6px"><summary style="cursor:pointer;color:var(--blue)">Tujuan, objek, dan output</summary><small style="white-space:pre-line">Tujuan: ${esc(a["Tujuan Pengawasan"])}</small><small style="white-space:pre-line">Objek: ${esc(a["Objek Pengawasan"])}</small><small style="white-space:pre-line">Output: ${esc(a["Target Output Kegiatan Pengawasan"])}</small></details></div>`).join(""):"<div class=\"sub\">Daftar acuan belum tersedia. Pastikan rumus di tab PTKI_Induk sudah diisi.</div>"}
+async function loadP(){try{prow=(await sheet("PTKI_Pelaksanaan")).filter(r=>r["Tema Pengawasan"]);$("perr").classList.add("hide");prender()}catch(e){$("perr").classList.remove("hide");$("perr").innerHTML="Data PTKI belum bisa dimuat. Pastikan tab PTKI_Pelaksanaan ada dan Google Sheets dibagikan dengan akses “Siapa saja yang memiliki link” (Viewer)."}
+ try{pind=(await sheet("PTKI_Induk")).filter(r=>r["Tema Pengawasan"])}catch(e){pind=[]}pacts()}
+function pxls(){const f=pf();if(!f.length){alert("Tidak ada data untuk diunduh.");return}
+ const c={};PS.forEach(s=>c[s]=0);f.forEach(r=>c[pst(r)]++);const d=[];if($("p-g").value)d.push("Kelompok: "+$("p-g").value);if($("p-j").value)d.push("Jenis: "+$("p-j").value);if($("p-t").value)d.push("Status: "+$("p-t").value);if($("p-q").value)d.push("Pencarian: "+$("p-q").value);
+ exportX({sheet:"PTKI",file:"PTKI_KPPN_Medan_I_"+new Date().toISOString().slice(0,10)+".xlsx",title:"Laporan Pemantauan PTKI – KPPN Medan I",filter:d.length?d.join(" · "):"Semua data (tanpa filter)",info:`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah baris: ${f.length} · ${PS.map(s=>s+": "+c[s]).join(" · ")}`,
+  headers:["No","Kelompok","Tema Pengawasan","Kegiatan","Jenis Pemantauan","Termin","Target Waktu Pelaporan","Batas Waktu","Status","Tanggal Realisasi","Catatan","Link Bukti"],widths:[6,14,44,50,16,14,26,14,13,16,36,16],stat:[8],
+  rows:f.map((r,i)=>[i+1,r["Kelompok"],r["Tema Pengawasan"],r["Kegiatan"],r["Jenis Pemantauan"],r["Termin"],r["Target Waktu Pelaporan"],r["Batas Waktu"],pst(r),r["Tanggal Realisasi"],r["Catatan"],r["Link Bukti"]])})}
+function ppdf(){const f=pf();if(!f.length){alert("Tidak ada data untuk dicetak.");return}
+ const c={};PS.forEach(s=>c[s]=0);f.forEach(r=>c[pst(r)]++);const d=[];if($("p-g").value)d.push("Kelompok: "+$("p-g").value);if($("p-j").value)d.push("Jenis: "+$("p-j").value);if($("p-t").value)d.push("Status: "+$("p-t").value);if($("p-q").value)d.push("Pencarian: "+$("p-q").value);
+ $("pa").innerHTML=`<div class="ph"><img src="assets/kemenkeu.png" alt=""><img src="assets/djpb.png" alt=""><img src="assets/kppn-medan-i.png" alt=""><img class="r" src="assets/intress.png" alt=""></div><h1>Laporan Pemantauan PTKI – KPPN Medan I</h1><p>Filter: ${esc(d.length?d.join(" · "):"Semua data (tanpa filter)")}</p><p>Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah baris: ${f.length} · ${PS.map(s=>s+": "+c[s]).join(" · ")}</p><table><colgroup><col style="width:4%"><col style="width:30%"><col style="width:9%"><col style="width:9%"><col style="width:13%"><col style="width:10%"><col style="width:10%"><col style="width:15%"></colgroup><thead><tr><th>No</th><th>Tema / kegiatan</th><th>Jenis</th><th>Termin</th><th>Target lapor</th><th>Batas waktu</th><th>Status</th><th>Realisasi</th></tr></thead><tbody>${f.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r["Tema Pengawasan"])}<br>${esc(r["Kegiatan"])}</td><td>${esc(r["Jenis Pemantauan"])}</td><td>${esc(r["Termin"]||"–")}</td><td>${esc(r["Target Waktu Pelaporan"])}</td><td>${esc(r["Batas Waktu"]||"–")}</td><td>${pst(r)}</td><td>${esc(r["Tanggal Realisasi"]||"–")}</td></tr>`).join("")}</tbody></table>`;
+ const im=[...$("pa").querySelectorAll("img")];Promise.all(im.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>window.print(),150))}
+["p-q","p-g","p-j","p-t","p-d"].forEach(i=>$(i).addEventListener("input",()=>{pn=25;ptable()}));
+$("pm").onclick=()=>{pn+=50;ptable()};$("p-r").onclick=()=>{["p-q","p-g","p-j","p-t","p-d"].forEach(i=>$(i).value="");pn=25;ptable()};$("p-x").onclick=pxls;$("p-p").onclick=ppdf;
+// ===== WBK/WBBM =====
+const WS=["Sudah","Sebagian","Belum"],WCOL={Sudah:"#2E9E5B",Sebagian:"#F5A623",Belum:"#B8C2D3"},WCLS={Sudah:"s-ok",Sebagian:"s-chg",Belum:"s-wait"};
+let wrow=[],wnil=[],wc1,wc2,wc7;
+const nm=s=>{const v=parseFloat(String(s==null?"":s).replace("%","").replace(",","."));return isNaN(v)?null:v};
+const fm=v=>v==null?"–":v.toLocaleString("id-ID",{maximumFractionDigits:2});
+const wpc=r=>{const s=String(r["Persen "+wy()]||""),v=nm(s);if(v==null)return null;return s.includes("%")?v:(v<=1?v*100:v)};
+const wy=()=>$("w-y").value;
+const wst=r=>{const s=r["Status "+wy()];return WS.includes(s)?s:"Belum"};
+const wkey=r=>r["Kategori"]+"|"+r["Komponen"];
+const wyears=()=>wrow.length?Object.keys(wrow[0]).map(k=>/^Status (\d{4})$/.exec(k)).filter(Boolean).map(m=>m[1]).sort():[];
+function wf(){const q=$("w-q").value.toLowerCase(),k=$("w-k").value,c=$("w-c").value,t=$("w-t").value;return wrow.filter(r=>(!k||r["Kategori"]==k)&&(!c||r["Komponen"]==c)&&(!t||wst(r)==t)&&(!q||(r["Dokumen (Standar Dokumen)"]+" "+r["Sub Bab"]).toLowerCase().includes(q)))}
+function wpk(r){return wnil.find(n=>n["Jenis"]=="Komponen"&&n["Kategori"]==r["Kategori"]&&nm(n["Kode"])!=null&&nm(n["Kode"])==nm(r["No Komponen"]))||wnil.find(n=>n["Jenis"]=="Komponen"&&n["Kategori"]==r["Kategori"]&&String(n["Uraian"]).trim()==String(r["Komponen"]).trim())}
+function wpcell(r){const x=wpk(r);if(!x)return"–";const p=wpc(x);return`<b>${p==null?"–":fm(Math.round(p*10)/10)+"%"}</b><div class="pb" style="margin:6px 0 4px"><i style="width:${Math.min(100,p||0)}%"></i></div><small style="color:#667085">Nilai ${fm(nm(x["Nilai "+wy()]))} dari bobot ${fm(nm(x["Bobot"]))}</small>`}
+function wsubs(){const m=new Map();wrow.forEach(r=>{const k=wkey(r)+"|"+r["Sub Bab"],o=m.get(k)||{n:0,d:0,p:0},s=wst(r);o.n++;if(s=="Sudah")o.d++;if(s=="Sebagian")o.p++;m.set(k,o)});return m}
+function wtable(){const y=wy(),f=wf(),sm=wsubs(),ks=f.map(wkey),ss=f.map(r=>wkey(r)+"|"+r["Sub Bab"]),sk=f.map(()=>0),sb=f.map(()=>0);
+ for(let i=0;i<f.length;){let j=i;while(j<f.length&&ks[j]==ks[i])j++;sk[i]=j-i;i=j}
+ for(let i=0;i<f.length;){let j=i;while(j<f.length&&ss[j]==ss[i])j++;sb[i]=j-i;i=j}
+ $("wtb").innerHTML=f.map((r,i)=>{const s=wst(r),o=sm.get(ss[i]),ps=o.d==o.n?"Lengkap":(o.d>0||o.p>0?"Sebagian":"Belum"),pc=ps=="Lengkap"?"s-ok":ps=="Sebagian"?"s-chg":"s-wait",lk=r["Link Bukti "+y];
+  return`<tr>${sk[i]?`<td rowspan="${sk[i]}" class="mg"><b>${esc(r["Komponen"])}</b><br><small style="color:#667085">${esc(r["Kategori"])}</small></td><td rowspan="${sk[i]}" class="mg">${wpcell(r)}</td>`:""}${sb[i]?`<td rowspan="${sb[i]}" class="mg">${esc(r["Sub Bab"])}</td>`:""}<td style="white-space:pre-line">${esc(r["Dokumen (Standar Dokumen)"])}</td><td><span class="b ${WCLS[s]}">${s}</span></td>${sb[i]?`<td rowspan="${sb[i]}" class="mg"><span class="b ${pc}">${ps}</span> <small style="color:#667085">${o.d} dari ${o.n} dokumen</small></td>`:""}<td>${lk?`<a href="${esc(lk)}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||'<tr><td colspan="7">Tidak ada data yang cocok.</td></tr>';
+ $("wcn").textContent=`Tahun ${y}: menampilkan ${f.length} dokumen`;$("wm").classList.add("hide")}
+function wrender(){const ys=wyears(),s=$("w-y"),cur=s.value,cy=String(new Date().getFullYear());s.innerHTML=ys.map(y=>`<option>${y}</option>`).join("");s.value=ys.includes(cur)?cur:(ys.includes(cy)?cy:(ys[ys.length-1]||""));
+ const n=wrow.length,c={};WS.forEach(x=>c[x]=0);wrow.forEach(r=>c[wst(r)]++);const pct=n?Math.round(c.Sudah/n*100):0;
+ $("wk").innerHTML=[["Total dokumen pengungkit",n,""],["Sudah ada",c.Sudah,"k-g"],["Sebagian",c.Sebagian,"k-o"],["Belum ada",c.Belum,"k-a"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
+ $("wbr").style.width=pct+"%";$("wtx").textContent=`Tahun ${s.value}: ${c.Sudah} dari ${n} dokumen sudah ada (${pct}%).`;
+ const kk=[...new Set(wrow.map(wkey))];
+ if(wc1)wc1.destroy();wc1=new Chart($("c5"),{type:"doughnut",data:{labels:WS,datasets:[{data:WS.map(x=>c[x]),backgroundColor:WS.map(x=>WCOL[x]),borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
+ $("c6").parentElement.style.height=(kk.length*46+90)+"px";
+ if(wc2)wc2.destroy();wc2=new Chart($("c6"),{type:"bar",data:{labels:kk.map(k=>{const p=k.split("|"),x=p[1].length>30?p[1].slice(0,29)+"…":p[1];return[p[0],x]}),datasets:WS.map(x=>({label:x,backgroundColor:WCOL[x],data:kk.map(k=>wrow.filter(r=>wkey(r)==k&&wst(r)==x).length)}))},options:{indexAxis:"y",maintainAspectRatio:false,layout:{padding:{right:12}},scales:{x:{stacked:true,ticks:{precision:0}},y:{stacked:true,ticks:{font:{size:10}}}},plugins:{legend:{position:"bottom"}}}});
+ fill("w-k",[...new Set(wrow.map(r=>r["Kategori"]))],"Semua kategori");fill("w-c",[...new Set(wrow.map(r=>r["Komponen"]))],"Semua komponen");fill("w-t",WS,"Semua status");wtable();if(wnil.length)wnilai()}
+function wnilai(){const by=u=>wnil.find(r=>String(r["Uraian"]).trim().toUpperCase()==u&&r["Jenis"]!="Total"||String(r["Uraian"]).trim().toUpperCase()==u),pick=(u,j)=>wnil.find(r=>String(r["Uraian"]).trim().toUpperCase()==u&&(!j||r["Jenis"]==j));
+ const cards=[["Nilai Evaluasi Reformasi Birokrasi",pick("NILAI EVALUASI REFORMASI BIROKRASI"),"k-o"],["Pengungkit",pick("PENGUNGKIT"),""],["Pemenuhan",pick("PEMENUHAN"),"k-g"],["Reform",pick("REFORM"),"k-a"],["Hasil",pick("HASIL"),"k-g"]];
+ $("wnl").innerHTML=cards.filter(a=>a[1]).map(a=>{const r=a[1],b=nm(r["Bobot"]),p=wpc(r);return`<div class="card kpi ${a[2]}"><div class="n">${fm(nm(r["Nilai "+wy()]))}${b?`<span style="font-size:15px;color:#667085"> / ${fm(b)}</span>`:""}</div><div class="l">${a[0]}${p!=null?" · "+fm(Math.round(p*10)/10)+"%":""}</div></div>`}).join("");
+ const km=wnil.filter(r=>r["Jenis"]=="Komponen"&&["Pemenuhan","Reform"].includes(r["Kategori"])),lb=[...new Set(km.filter(r=>r["Kategori"]=="Pemenuhan").map(r=>r["Uraian"]))];
+ if(wc7)wc7.destroy();wc7=new Chart($("c7"),{type:"bar",data:{labels:lb.map(x=>x.length>26?x.slice(0,25)+"…":x),datasets:["Pemenuhan","Reform"].map((k,i)=>({label:k,backgroundColor:i?"#F5A623":"#1F5FAD",data:lb.map(l=>{const r=km.find(x=>x["Kategori"]==k&&x["Uraian"]==l);return r?Math.round((wpc(r)||0)*10)/10:0})}))},options:{maintainAspectRatio:false,scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}}},plugins:{legend:{position:"bottom"}}}})}
+async function loadW(){try{wrow=(await sheetAny(["WBK_Pelaksanaan","WBK_Dokumen"],"Dokumen (Standar Dokumen)")).filter(r=>r["Dokumen (Standar Dokumen)"]);$("werr").classList.add("hide");wrender()}catch(e){$("werr").classList.remove("hide");$("werr").innerHTML="Data WBK/WBBM belum bisa dimuat. Pastikan tab WBK_Pelaksanaan ada dan Google Sheets dibagikan dengan akses “Siapa saja yang memiliki link” (Viewer)."}
+ try{wnil=await sheet("WBK_Nilai");wnilai();if(wrow.length)wtable()}catch(e){wnil=[];$("wnl").innerHTML=""}}
+function wdesc(){const d=["Tahun: "+wy()];if($("w-k").value)d.push("Kategori: "+$("w-k").value);if($("w-c").value)d.push("Komponen: "+$("w-c").value);if($("w-t").value)d.push("Status: "+$("w-t").value);if($("w-q").value)d.push("Pencarian: "+$("w-q").value);return d.join(" · ")}
+function wsum(f){const c={};WS.forEach(s=>c[s]=0);f.forEach(r=>c[wst(r)]++);return`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah dokumen: ${f.length} · ${WS.map(s=>s+": "+c[s]).join(" · ")}`}
+function wxls(){const f=wf(),y=wy();if(!f.length){alert("Tidak ada data untuk diunduh.");return}
+ exportX({sheet:"WBK-WBBM "+y,file:"WBK_WBBM_Pengungkit_"+y+"_KPPN_Medan_I_"+new Date().toISOString().slice(0,10)+".xlsx",title:"Laporan Dokumen Pengungkit WBK/WBBM Tahun "+y+" – KPPN Medan I",filter:wdesc(),info:wsum(f),
+  headers:["No","Kategori","Komponen","Sub Bab","Kode","Dokumen (Standar Dokumen)","Tahun","Status","Link Bukti"],widths:[6,12,30,32,7,70,8,12,18],stat:[7],
+  rows:f.map((r,i)=>[i+1,r["Kategori"],r["Komponen"],r["Sub Bab"],r["Kode"],r["Dokumen (Standar Dokumen)"],y,wst(r),r["Link Bukti "+y]])})}
+function wpdf(){const f=wf(),y=wy();if(!f.length){alert("Tidak ada data untuk dicetak.");return}
+ $("pa").innerHTML=`<div class="ph"><img src="assets/kemenkeu.png" alt=""><img src="assets/djpb.png" alt=""><img src="assets/kppn-medan-i.png" alt=""><img class="r" src="assets/intress.png" alt=""></div><h1>Laporan Dokumen Pengungkit WBK/WBBM Tahun ${esc(y)} – KPPN Medan I</h1><p>Filter: ${esc(wdesc())}</p><p>${esc(wsum(f))}</p><table><colgroup><col style="width:5%"><col style="width:25%"><col style="width:55%"><col style="width:15%"></colgroup><thead><tr><th>No</th><th>Komponen / sub bab</th><th>Dokumen</th><th>Status</th></tr></thead><tbody>${f.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r["Komponen"])}<br>${esc(r["Sub Bab"])}</td><td style="white-space:pre-line">${esc(r["Dokumen (Standar Dokumen)"])}</td><td>${wst(r)}</td></tr>`).join("")}</tbody></table>`;
+ const im=[...$("pa").querySelectorAll("img")];Promise.all(im.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>window.print(),150))}
+["w-q","w-k","w-c","w-t"].forEach(i=>$(i).addEventListener("input",wtable));$("w-y").addEventListener("input",wrender);
+$("w-r").onclick=()=>{["w-q","w-k","w-c","w-t"].forEach(i=>$(i).value="");wtable()};$("w-x").onclick=wxls;$("w-p").onclick=wpdf;
+// ===== SMAP =====
+let srow=[],sc1,sc2;
+const sst=r=>(r["Status (Sudah/Belum)"]||"")=="Sudah"?"Sudah":"Belum";
+function sf(){const q=$("s-q").value.toLowerCase(),k=$("s-k").value,t=$("s-t").value;return srow.filter(r=>(!k||r["Klausul"]==k)&&(!t||sst(r)==t)&&(!q||(r["Dokumen Pendukung"]+" "+r["Nama Klausul"]).toLowerCase().includes(q)))}
+function stable(){const f=sf(),all=new Map();srow.forEach(r=>{const k=r["Klausul"]+"|"+r["Sub-klausul"],o=all.get(k)||{n:0,d:0};o.n++;if(sst(r)=="Sudah")o.d++;all.set(k,o)});
+ const kk=f.map(r=>r["Klausul"]),ss=f.map(r=>r["Klausul"]+"|"+r["Sub-klausul"]),sk=f.map(()=>0),sb=f.map(()=>0);
+ for(let i=0;i<f.length;){let j=i;while(j<f.length&&kk[j]==kk[i])j++;sk[i]=j-i;i=j}
+ for(let i=0;i<f.length;){let j=i;while(j<f.length&&ss[j]==ss[i])j++;sb[i]=j-i;i=j}
+ $("stb").innerHTML=f.map((r,i)=>{const o=all.get(ss[i]),ps=o.d==o.n?"Lengkap":(o.d>0?"Sebagian":"Belum"),pc=ps=="Lengkap"?"s-ok":ps=="Sebagian"?"s-chg":"s-wait",st=sst(r);
+  return`<tr>${sk[i]?`<td rowspan="${sk[i]}" class="mg"><b>Klausul ${esc(r["Klausul"])}</b></td>`:""}${sb[i]?`<td rowspan="${sb[i]}" class="mg"><b>${esc(r["Sub-klausul"])}</b><br><small style="color:#667085">${esc(r["Nama Klausul"])}</small></td>`:""}<td>${esc(r["Dokumen Pendukung"])}</td><td><span class="b ${st=="Sudah"?"s-ok":"s-wait"}">${st}</span></td>${sb[i]?`<td rowspan="${sb[i]}" class="mg"><span class="b ${pc}">${ps}</span> <small style="color:#667085">${o.d} dari ${o.n} dokumen</small></td>`:""}<td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||'<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>';
+ $("scn").textContent=`Menampilkan ${f.length} dari ${srow.length} dokumen`}
+function srender(){const n=srow.length,d=srow.filter(r=>sst(r)=="Sudah").length,bk=srow.filter(r=>r["Link Bukti"]).length,pct=n?Math.round(d/n*1000)/10:0,ks=[...new Set(srow.map(r=>r["Klausul"]))].sort((a,b)=>a-b);
+ $("sk").innerHTML=[["Total dokumen pendukung",n,""],["Sudah ada",d,"k-g"],["Belum ada",n-d,"k-a"],["Bukti terisi",bk,"k-o"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
+ $("sbr").style.width=pct+"%";$("stx").textContent=`${d} dari ${n} dokumen pendukung sudah ada (${pct}%).`;
+ if(sc1)sc1.destroy();sc1=new Chart($("c9"),{type:"doughnut",data:{labels:["Sudah","Belum"],datasets:[{data:[d,n-d],backgroundColor:["#2E9E5B","#B8C2D3"],borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
+ if(sc2)sc2.destroy();sc2=new Chart($("c10"),{type:"bar",data:{labels:ks.map(k=>"Klausul "+k),datasets:[["Sudah","#2E9E5B"],["Belum","#B8C2D3"]].map(a=>({label:a[0],backgroundColor:a[1],data:ks.map(k=>srow.filter(r=>r["Klausul"]==k&&sst(r)==a[0]).length)}))},options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,ticks:{precision:0}}},plugins:{legend:{position:"bottom"}}}});
+ const s=$("s-k"),cur=s.value;s.innerHTML='<option value="">Semua klausul</option>'+ks.map(k=>`<option value="${esc(k)}">Klausul ${esc(k)}</option>`).join("");s.value=cur;stable()}
+async function loadS(){try{const d=await sheetAny(["SMAP_Pelaksanaan","SMAP_Data","Data"],"Dokumen Pendukung");srow=d.filter(r=>r["Dokumen Pendukung"]);$("serr").classList.add("hide");srender()}catch(e){$("serr").classList.remove("hide");$("serr").innerHTML="Data SMAP belum bisa dimuat. Pastikan tab SMAP_Pelaksanaan ada dan Google Sheets dibagikan dengan akses “Siapa saja yang memiliki link” (Viewer)."}}
+function sdesc(){const d=[];if($("s-k").value)d.push("Klausul: "+$("s-k").value);if($("s-t").value)d.push("Status: "+$("s-t").value);if($("s-q").value)d.push("Pencarian: "+$("s-q").value);return d.length?d.join(" · "):"Semua data (tanpa filter)"}
+function ssum(f){const d=f.filter(r=>sst(r)=="Sudah").length;return`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah dokumen: ${f.length} · Sudah: ${d} · Belum: ${f.length-d}`}
+function sxls(){const f=sf();if(!f.length){alert("Tidak ada data untuk diunduh.");return}
+ exportX({sheet:"SMAP",file:"SMAP_KPPN_Medan_I_"+new Date().toISOString().slice(0,10)+".xlsx",title:"Laporan Dokumen Pendukung SMAP (ISO 37001) – KPPN Medan I",filter:sdesc(),info:ssum(f),
+  headers:["No","Klausul","Sub-klausul","Nama Klausul","Dokumen Pendukung","Status","Link Bukti"],widths:[6,10,12,44,60,12,18],stat:[5],
+  rows:f.map((r,i)=>[i+1,r["Klausul"],r["Sub-klausul"],r["Nama Klausul"],r["Dokumen Pendukung"],sst(r),r["Link Bukti"]])})}
+function spdf(){const f=sf();if(!f.length){alert("Tidak ada data untuk dicetak.");return}
+ $("pa").innerHTML=`<div class="ph"><img src="assets/kemenkeu.png" alt=""><img src="assets/djpb.png" alt=""><img src="assets/kppn-medan-i.png" alt=""><img class="r" src="assets/intress.png" alt=""></div><h1>Laporan Dokumen Pendukung SMAP (ISO 37001) – KPPN Medan I</h1><p>Filter: ${esc(sdesc())}</p><p>${esc(ssum(f))}</p><table><colgroup><col style="width:4%"><col style="width:9%"><col style="width:27%"><col style="width:42%"><col style="width:10%"><col style="width:8%"></colgroup><thead><tr><th>No</th><th>Klausul</th><th>Sub-klausul</th><th>Dokumen pendukung</th><th>Status</th><th>Bukti</th></tr></thead><tbody>${f.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r["Klausul"])}</td><td>${esc(r["Sub-klausul"])} ${esc(r["Nama Klausul"])}</td><td>${esc(r["Dokumen Pendukung"])}</td><td>${sst(r)}</td><td>${r["Link Bukti"]?"Ada":"–"}</td></tr>`).join("")}</tbody></table>`;
+ const im=[...$("pa").querySelectorAll("img")];Promise.all(im.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>window.print(),150))}
+["s-q","s-k","s-t"].forEach(i=>$(i).addEventListener("input",stable));$("s-r").onclick=()=>{["s-q","s-k","s-t"].forEach(i=>$(i).value="");stable()};$("s-x").onclick=sxls;$("s-p").onclick=spdf;
+// ===== MANAJEMEN RISIKO =====
+let mrow=[],mc1,mc2;
+const mst=r=>(r["Dokumen (Sudah/Belum)"]||"")=="Sudah"?"Sudah":"Belum";
+const mpics=r=>String(r["Penanggung Jawab"]||"").split(/\s+dan\s+(?=(?:Seksi|Subbag|Subbagian|Bagian)\b)|,|;/).map(x=>x.trim()).filter(Boolean);
+function mf(){const q=$("m-q").value.toLowerCase(),k=$("m-k").value,t=$("m-t").value;return mrow.filter(r=>(!k||mpics(r).includes(k))&&(!t||mst(r)==t)&&(!q||(r["Kejadian Risiko"]+" "+r["Rencana Aksi Mitigasi Risiko"]+" "+r["Penanggung Jawab"]).toLowerCase().includes(q)))}
+function mtable(){const f=mf();$("mtb").innerHTML=f.map(r=>{const s=mst(r);return`<tr><td>${esc(r["No"])}</td><td>${esc(r["Kejadian Risiko"])}</td><td>${esc(r["Rencana Aksi Mitigasi Risiko"])}</td><td>${esc(r["Penanggung Jawab"])}</td><td><span class="b ${s=="Sudah"?"s-ok":"s-wait"}">${s}</span></td><td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||'<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>';
+ $("mcn").textContent=`Menampilkan ${f.length} dari ${mrow.length} rencana aksi`}
+function mrender(){const n=mrow.length,d=mrow.filter(r=>mst(r)=="Sudah").length,bk=mrow.filter(r=>r["Link Bukti"]).length,pct=n?Math.round(d/n*1000)/10:0,pc=[...new Set(mrow.flatMap(mpics))];
+ $("mk").innerHTML=[["Total rencana aksi mitigasi",n,""],["Dokumen sudah ada",d,"k-g"],["Dokumen belum ada",n-d,"k-a"],["Bukti terisi",bk,"k-o"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
+ $("mbr").style.width=pct+"%";$("mtx").textContent=`${d} dari ${n} dokumen sudah ada (${pct}%).`;
+ if(mc1)mc1.destroy();mc1=new Chart($("c11"),{type:"doughnut",data:{labels:["Sudah","Belum"],datasets:[{data:[d,n-d],backgroundColor:["#2E9E5B","#B8C2D3"],borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
+ $("c12").parentElement.style.height=(pc.length*46+90)+"px";
+ if(mc2)mc2.destroy();mc2=new Chart($("c12"),{type:"bar",data:{labels:pc.map(x=>x.length>28?x.slice(0,27)+"…":x),datasets:[["Sudah","#2E9E5B"],["Belum","#B8C2D3"]].map(a=>({label:a[0],backgroundColor:a[1],data:pc.map(u=>mrow.filter(r=>mpics(r).includes(u)&&mst(r)==a[0]).length)}))},options:{indexAxis:"y",maintainAspectRatio:false,layout:{padding:{right:12}},scales:{x:{stacked:true,ticks:{precision:0}},y:{stacked:true}},plugins:{legend:{position:"bottom"}}}});
+ fill("m-k",pc,"Semua penanggung jawab");mtable()}
+async function loadM(){try{const d=await sheetAny(["Manajemen_Resiko","MR_Data","Manajemen_Risiko"],"Kejadian Risiko");mrow=d.filter(r=>r["Kejadian Risiko"]);$("merr").classList.add("hide");mrender()}catch(e){$("merr").classList.remove("hide");$("merr").innerHTML="Data manajemen risiko belum bisa dimuat. Pastikan tab Manajemen_Resiko ada dan Google Sheets dibagikan dengan akses “Siapa saja yang memiliki link” (Viewer)."}}
+function mdesc(){const d=[];if($("m-k").value)d.push("Penanggung jawab: "+$("m-k").value);if($("m-t").value)d.push("Status: "+$("m-t").value);if($("m-q").value)d.push("Pencarian: "+$("m-q").value);return d.length?d.join(" · "):"Semua data (tanpa filter)"}
+function msum(f){const d=f.filter(r=>mst(r)=="Sudah").length;return`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah rencana aksi: ${f.length} · Sudah: ${d} · Belum: ${f.length-d}`}
+function mxls(){const f=mf();if(!f.length){alert("Tidak ada data untuk diunduh.");return}
+ exportX({sheet:"Manajemen Risiko",file:"Manajemen_Risiko_KPPN_Medan_I_"+new Date().toISOString().slice(0,10)+".xlsx",title:"Laporan Monitoring Mitigasi Risiko – KPPN Medan I",filter:mdesc(),info:msum(f),
+  headers:["No","Kejadian Risiko","Rencana Aksi Mitigasi Risiko","Penanggung Jawab","Dokumen","Link Bukti"],widths:[8,48,56,30,12,18],stat:[4],
+  rows:f.map(r=>[r["No"],r["Kejadian Risiko"],r["Rencana Aksi Mitigasi Risiko"],r["Penanggung Jawab"],mst(r),r["Link Bukti"]])})}
+function mpdf(){const f=mf();if(!f.length){alert("Tidak ada data untuk dicetak.");return}
+ $("pa").innerHTML=`<div class="ph"><img src="assets/kemenkeu.png" alt=""><img src="assets/djpb.png" alt=""><img src="assets/kppn-medan-i.png" alt=""><img class="r" src="assets/intress.png" alt=""></div><h1>Laporan Monitoring Mitigasi Risiko – KPPN Medan I</h1><p>Filter: ${esc(mdesc())}</p><p>${esc(msum(f))}</p><table><colgroup><col style="width:5%"><col style="width:27%"><col style="width:32%"><col style="width:19%"><col style="width:9%"><col style="width:8%"></colgroup><thead><tr><th>No</th><th>Kejadian risiko</th><th>Rencana aksi mitigasi</th><th>Penanggung jawab</th><th>Dokumen</th><th>Bukti</th></tr></thead><tbody>${f.map(r=>`<tr><td>${esc(r["No"])}</td><td>${esc(r["Kejadian Risiko"])}</td><td>${esc(r["Rencana Aksi Mitigasi Risiko"])}</td><td>${esc(r["Penanggung Jawab"])}</td><td>${mst(r)}</td><td>${r["Link Bukti"]?"Ada":"–"}</td></tr>`).join("")}</tbody></table>`;
+ const im=[...$("pa").querySelectorAll("img")];Promise.all(im.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>window.print(),150))}
+["m-q","m-k","m-t"].forEach(i=>$(i).addEventListener("input",mtable));$("m-r").onclick=()=>{["m-q","m-k","m-t"].forEach(i=>$(i).value="");mtable()};$("m-x").onclick=mxls;$("m-p").onclick=mpdf;
+const SUB={mr:"Monitoring Mitigasi Risiko · Tahun 2026",smap:"Sistem Manajemen Anti Penyuapan (SMAP) ISO 37001 · Tahun 2026",wbk:"Pengungkit Zona Integritas WBK/WBBM · Tahun 2026",skm:"Standardisasi Kegiatan Manajemen (SKM) · Tahun 2026",ptki:"Pemantauan Tahunan Kepatuhan Internal (PTKI) · Tahun 2026"};
+document.querySelectorAll("nav button[data-v]").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x==b));["skm","ptki","wbk","smap","mr"].forEach(v=>$("v-"+v).classList.toggle("hide",v!=b.dataset.v));$("sub").textContent=SUB[b.dataset.v]});
+["q","fk","fs","fq","ft","fl"].forEach(i=>$(i).addEventListener("input",()=>{shown=25;table()}));
+$("more").onclick=()=>{shown+=50;table()};$("rst").onclick=()=>{["q","fk","fs","fq","ft","fl"].forEach(i=>$(i).value="");shown=25;table()};
+$("rf").onclick=e=>{e.preventDefault();load();loadP();loadW();loadS();loadM()};load();loadP();loadW();loadS();loadM();
+</script>
+<style>
+.ms{position:relative;flex:1;min-width:150px}
+.ms-b{padding:9px 28px 9px 10px;border:1px solid #cfd8e6;border-radius:8px;font-size:14px;background:#fff;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;user-select:none}
+.ms-b::after{content:"";position:absolute;right:11px;top:50%;width:6px;height:6px;border:solid #667085;border-width:0 2px 2px 0;transform:translateY(-70%) rotate(45deg)}
+.ms-b.on{border-color:var(--blue);color:var(--navy);font-weight:600}
+.ms-b:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.ms-p{display:none;position:absolute;left:0;top:calc(100% + 4px);z-index:50;min-width:100%;width:max-content;max-width:min(360px,88vw);max-height:280px;overflow:auto;background:#fff;border:1px solid #cfd8e6;border-radius:10px;box-shadow:0 8px 24px rgba(16,24,40,.16);padding:6px}
+.ms.open .ms-p{display:block}
+.ms-a{display:flex;gap:14px;padding:4px 6px 6px;border-bottom:1px solid var(--line);margin-bottom:4px;font-size:12.5px}
+.ms-a span{color:var(--blue);cursor:pointer;font-weight:600}
+.ms-l label{display:flex;gap:8px;align-items:flex-start;padding:6px;border-radius:6px;font-size:14px;cursor:pointer}
+.ms-l label:hover{background:#F4F7FB}
+.ms-l input{padding:0;border:0;min-width:0;flex:none;width:16px;height:16px;margin-top:2px;accent-color:var(--blue)}
+.ms-e{padding:8px;color:var(--muted);font-size:13px}
+</style>
+<script>
+/* ===== Filter multi-pilih + diagram mengikuti filter (tambahan; kode di atas tidak diubah) ===== */
+(function(){
+const IDS=["fk","fs","fq","ft","fl","p-g","p-j","p-t","w-k","w-c","w-t","s-k","s-t","m-k","m-t"],MS={};
+window.msv=id=>MS[id]?[...MS[id].sel]:[];
+function build(id){
+ const sel=$(id),o={sel:new Set(),opts:[],lab:""},W=document.createElement("div");
+ W.className="ms";W.innerHTML='<div class="ms-b" tabindex="0" role="button" aria-haspopup="true"></div><div class="ms-p"><div class="ms-a"><span data-a="all">Pilih semua</span><span data-a="none">Hapus pilihan</span></div><div class="ms-l"></div></div>';
+ sel.style.display="none";sel.parentNode.insertBefore(W,sel);
+ const B=W.querySelector(".ms-b"),L=W.querySelector(".ms-l");
+ const label=()=>{const n=o.sel.size;B.textContent=!n?o.lab:n<=2?[...o.sel].map(v=>(o.opts.find(x=>x.v==v)||{l:v}).l).join(", "):n+" dipilih";B.classList.toggle("on",n>0)};
+ const draw=()=>{L.innerHTML=o.opts.map((x,i)=>`<label><input type="checkbox" data-i="${i}"${o.sel.has(x.v)?" checked":""}><span>${esc(x.l)}</span></label>`).join("")||'<div class="ms-e">Tidak ada pilihan</div>';label()};
+ const sync=()=>{const op=[...sel.options];o.lab=(op.find(x=>x.value==="")||{}).textContent||"Semua";o.opts=op.filter(x=>x.value!=="").map(x=>({v:x.value,l:x.textContent}));const ok=new Set(o.opts.map(x=>x.v));[...o.sel].forEach(v=>{if(!ok.has(v))o.sel.delete(v)});draw()};
+ const fire=()=>sel.dispatchEvent(new Event("input",{bubbles:true}));
+ Object.defineProperty(sel,"value",{configurable:true,get:()=>[...o.sel].join(", "),set:v=>{if(v===""||v==null){o.sel.clear();draw()}}});
+ L.addEventListener("change",e=>{const v=o.opts[+e.target.dataset.i].v;e.target.checked?o.sel.add(v):o.sel.delete(v);label();fire()});
+ W.querySelector(".ms-a").addEventListener("click",e=>{const a=e.target.dataset.a;if(!a)return;if(a=="all")o.opts.forEach(x=>o.sel.add(x.v));else o.sel.clear();draw();fire()});
+ const tg=()=>{const open=!W.classList.contains("open");document.querySelectorAll(".ms.open").forEach(m=>m.classList.remove("open"));if(open)W.classList.add("open")};
+ B.addEventListener("click",tg);B.addEventListener("keydown",e=>{if(e.key=="Enter"||e.key==" "){e.preventDefault();tg()}});
+ new MutationObserver(sync).observe(sel,{childList:true});sync();MS[id]=o}
+IDS.forEach(build);
+document.addEventListener("click",e=>{if(!e.target.closest(".ms"))document.querySelectorAll(".ms.open").forEach(m=>m.classList.remove("open"))});
+document.addEventListener("keydown",e=>{if(e.key=="Escape")document.querySelectorAll(".ms.open").forEach(m=>m.classList.remove("open"))});
+const V=msv,inc=(a,x)=>!a.length||a.includes(x);
+
+// ---- fungsi penyaring (multi-pilih) ----
+window.filtered=function(){const q=$("q").value.toLowerCase(),k=V("fk"),s=V("fs"),t=V("ft"),l=V("fl"),w=V("fq");
+ return rows.filter(r=>inc(k,r["Kegiatan"])&&inc(s,r["Satuan"])&&inc(t,stat(r))&&inc(l,lap(r))&&(!w.length||w.some(x=>sq(r).includes(+x)))&&(!q||(r["Kegiatan"]+" "+r["Periode"]+" "+(r["Keterangan (alasan jadwal berubah / tidak terlaksana)"]||"")).toLowerCase().includes(q)))};
+window.fdesc=function(){const a=[],j=(id,lab,m)=>{const v=V(id);if(v.length)a.push(lab+": "+(m?v.map(m):v).join(", "))};
+ j("fk","Kegiatan");j("fs","Satuan");j("ft","Status");j("fl","Laporan");j("fq","Triwulan",x=>["","I","II","III","IV"][x]);if($("q").value)a.push("Pencarian: "+$("q").value);return a.length?a.join(" · "):"Semua data (tanpa filter)"};
+window.pf=function(){const q=$("p-q").value.toLowerCase(),g=V("p-g"),j=V("p-j"),t=V("p-t"),d1=$("p-d").value,d2=$("p-d2").value;
+ return prow.filter(r=>inc(g,r["Kelompok"])&&inc(j,r["Jenis Pemantauan"])&&inc(t,pst(r))&&(!(d1||d2)||(pday(r)&&(!d1||pday(r)>=d1)&&(!d2||pday(r)<=d2)))&&(!q||(r["Tema Pengawasan"]+" "+r["Kegiatan"]+" "+r["Catatan"]).toLowerCase().includes(q)))};
+window.wf=function(){const q=$("w-q").value.toLowerCase(),k=V("w-k"),c=V("w-c"),t=V("w-t");
+ return wrow.filter(r=>inc(k,r["Kategori"])&&inc(c,r["Komponen"])&&inc(t,wst(r))&&(!q||(r["Dokumen (Standar Dokumen)"]+" "+r["Sub Bab"]).toLowerCase().includes(q)))};
+window.sf=function(){const q=$("s-q").value.toLowerCase(),k=V("s-k"),t=V("s-t");
+ return srow.filter(r=>inc(k,String(r["Klausul"]))&&inc(t,sst(r))&&(!q||(r["Dokumen Pendukung"]+" "+r["Nama Klausul"]).toLowerCase().includes(q)))};
+window.mf=function(){const q=$("m-q").value.toLowerCase(),k=V("m-k"),t=V("m-t");
+ return mrow.filter(r=>(!k.length||mpics(r).some(x=>k.includes(x)))&&inc(t,mst(r))&&(!q||(r["Kejadian Risiko"]+" "+r["Rencana Aksi Mitigasi Risiko"]+" "+r["Penanggung Jawab"]).toLowerCase().includes(q)))};
+
+// ---- diagram ikut filter (diperbarui di tempat) ----
+function updSKM(){if(!ch1||!ch2)return;const f=filtered(),c={};ST.forEach(s=>c[s]=0);f.forEach(r=>c[stat(r)]++);
+ ch1.data.datasets[0].data=ST.map(s=>c[s]);ch1.update();const n=[...new Set(f.map(r=>r["Kegiatan"]))];
+ ch2.data.labels=n.map(x=>x.length>34?x.slice(0,33)+"…":x);ch2.data.datasets.forEach((d,i)=>d.data=n.map(m=>f.filter(r=>r["Kegiatan"]==m&&stat(r)==ST[i]).length));ch2.update()}
+function updP(){if(!pc3||!pc4)return;const f=pf(),c={};PS.forEach(s=>c[s]=0);f.forEach(r=>c[pst(r)]++);
+ pc3.data.datasets[0].data=PS.map(s=>c[s]);pc3.update();const js=[...new Set(f.map(r=>r["Jenis Pemantauan"]))];
+ pc4.data.labels=js;pc4.data.datasets.forEach((d,i)=>d.data=js.map(j=>f.filter(r=>r["Jenis Pemantauan"]==j&&pst(r)==PS[i]).length));pc4.update()}
+function updW7(){if(!wc7||!wnil.length)return;const k=V("w-k"),c=V("w-c"),t=V("w-t"),km=wnil.filter(r=>r["Jenis"]=="Komponen"&&["Pemenuhan","Reform"].includes(r["Kategori"])),
+ cats=["Pemenuhan","Reform"].filter(x=>inc(k,x));let lb=[...new Set(km.filter(r=>cats.length==2?r["Kategori"]=="Pemenuhan":r["Kategori"]==cats[0]).map(r=>r["Uraian"]))];
+ if(c.length||t.length||$("w-q").value){const ok=new Set(wf().map(r=>{const x=wpk(r);return x&&x["Uraian"]}));lb=lb.filter(l=>ok.has(l))}
+ wc7.data.labels=lb.map(x=>x.length>26?x.slice(0,25)+"…":x);
+ wc7.data.datasets=cats.map(kt=>({label:kt,backgroundColor:kt=="Reform"?"#F5A623":"#1F5FAD",data:lb.map(l=>{const r=km.find(x=>x["Kategori"]==kt&&x["Uraian"]==l);return r?Math.round((wpc(r)||0)*10)/10:0})}));wc7.update()}
+function updW(){const f=wf();if(wc1){const c={};WS.forEach(s=>c[s]=0);f.forEach(r=>c[wst(r)]++);wc1.data.datasets[0].data=WS.map(s=>c[s]);wc1.update()}
+ if(wc2){const kk=[...new Set(f.map(wkey))];$("c6").parentElement.style.height=(kk.length*46+90)+"px";
+  wc2.data.labels=kk.map(k=>{const p=k.split("|"),x=p[1].length>30?p[1].slice(0,29)+"…":p[1];return[p[0],x]});
+  wc2.data.datasets.forEach((d,i)=>d.data=kk.map(k=>f.filter(r=>wkey(r)==k&&wst(r)==WS[i]).length));wc2.update()}
+ updW7()}
+function updS(){if(!sc1||!sc2)return;const f=sf(),d=f.filter(r=>sst(r)=="Sudah").length;sc1.data.datasets[0].data=[d,f.length-d];sc1.update();
+ const ks=[...new Set(f.map(r=>r["Klausul"]))].sort((a,b)=>a-b);sc2.data.labels=ks.map(k=>"Klausul "+k);
+ sc2.data.datasets.forEach((x,i)=>x.data=ks.map(k=>f.filter(r=>r["Klausul"]==k&&sst(r)==["Sudah","Belum"][i]).length));sc2.update()}
+function updM(){if(!mc1||!mc2)return;const f=mf(),d=f.filter(r=>mst(r)=="Sudah").length,k=V("m-k");mc1.data.datasets[0].data=[d,f.length-d];mc1.update();
+ let pc=[...new Set(f.flatMap(mpics))];if(k.length)pc=pc.filter(u=>k.includes(u));$("c12").parentElement.style.height=(pc.length*46+90)+"px";
+ mc2.data.labels=pc.map(x=>x.length>28?x.slice(0,27)+"…":x);mc2.data.datasets.forEach((x,i)=>x.data=pc.map(u=>f.filter(r=>mpics(r).includes(u)&&mst(r)==["Sudah","Belum"][i]).length));mc2.update()}
+const hook=(n,u)=>{const o=window[n];window[n]=function(){const r=o.apply(this,arguments);u();return r}};
+hook("table",updSKM);hook("ptable",updP);hook("wtable",updW);hook("stable",updS);hook("mtable",updM);hook("wnilai",updW7);
+[[["w-q","w-k","w-c","w-t"],updW],[["s-q","s-k","s-t"],updS],[["m-q","m-k","m-t"],updM]].forEach(([ids,u])=>ids.forEach(i=>$(i).addEventListener("input",u)));
+$("p-d2").addEventListener("input",()=>{pn=25;ptable()});
+const pr=$("p-r").onclick;$("p-r").onclick=function(){$("p-d2").value="";return pr.apply(this,arguments)};
+})();
+</script>
+</body></html>
