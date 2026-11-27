@@ -50,6 +50,7 @@ footer{text-align:center;color:var(--muted);font-size:12.5px;padding:18px}
 body,button,input,select{font-family:"Plus Jakarta Sans","Segoe UI",Roboto,Arial,sans-serif}
 .two>*{min-width:0}.pb{height:10px;background:#EEF2F7;border-radius:99px;overflow:hidden;min-width:90px}.pb i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--orange))}
 .mt td{border:1px solid #DDE3EC}.mt td.mg{background:#F4F7FB;vertical-align:top}.mt tr:nth-child(even) td{background:#fff}.mt tr:nth-child(even) td.mg{background:#F4F7FB}
+.s-x1{background:#E3EEFB;color:#1F5FAD}.s-x2{background:#EEE6FA;color:#6B3FB0}.s-x3{background:#DDF3F5;color:#0B7B86}.s-x4{background:#FBE3EC;color:#9E2B55}.s-x5{background:#E8ECF2;color:#4A5B75}.s-x6{background:#F6EFCB;color:#8A6D0B}.k-x{border-color:#1F5FAD}
 </style></head><body>
 <header>
  <div class="hl"><img src="assets/kemenkeu.png" alt="Kementerian Keuangan"><img src="assets/djpb.png" alt="DJPb"><img src="assets/kppn-medan-i.png" alt="KPPN Medan I" style="height:42px"></div>
@@ -147,6 +148,10 @@ body,button,input,select{font-family:"Plus Jakarta Sans","Segoe UI",Roboto,Arial
 <script>
 // === PENGATURAN: ID Google Sheets (bagian di antara /d/ dan /edit pada link spreadsheet) ===
 const SHEET_ID="19I8xpKC6gJxvUbfCgRw9saeyN7MAUdX9UIuqrkIJc30";
+// ===== status dinamis: nilai status apa pun di spreadsheet ikut tampil =====
+const SPAL=["#1F5FAD","#8E5BD6","#0FA3B1","#E86F9A","#7A8CA5","#C9A227"],SCLX=["s-x1","s-x2","s-x3","s-x4","s-x5","s-x6"],SXL=[["FFE3EEFB","FF1F5FAD"],["FFEEE6FA","FF6B3FB0"],["FFDDF3F5","FF0B7B86"],["FFFBE3EC","FF9E2B55"],["FFE8ECF2","FF4A5B75"],["FFF6EFCB","FF8A6D0B"]];let sdyn=0;
+function snorm(v,arr){v=String(v==null?"":v).trim().replace(/\s+/g," ");if(!v)return"";return arr.find(x=>x.toLowerCase()==v.toLowerCase())||v.charAt(0).toUpperCase()+v.slice(1)}
+function sreg(arr,col,cls,v){if(!arr.includes(v)){arr.push(v);const i=sdyn++%SPAL.length,pr=/proses|sedang|berjalan/i.test(v)&&!Object.values(col).includes("#F5A623");col[v]=pr?"#F5A623":SPAL[i];cls[v]=pr?"s-chg":SCLX[i];STC[v]=pr?STC.Proses:SXL[i]}return v}
 const ST=["Terlaksana sesuai jadwal","Terlaksana jadwal berubah","Tidak terlaksana","Belum dilaksanakan"];
 const COL={"Terlaksana sesuai jadwal":"#2E9E5B","Terlaksana jadwal berubah":"#F5A623","Tidak terlaksana":"#D64545","Belum dilaksanakan":"#B8C2D3"};
 const CLS={"Terlaksana sesuai jadwal":"s-ok","Terlaksana jadwal berubah":"s-chg","Tidak terlaksana":"s-no","Belum dilaksanakan":"s-wait"};
@@ -156,18 +161,19 @@ function csv(t){const o=[];let r=[],c="",q=false;for(let i=0;i<t.length;i++){con
 async function sheet(n){const u=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(n)}`;const r=await fetch(u);if(!r.ok)throw new Error(n);const a=csv(await r.text());const h=a[0].map(s=>s.trim());return a.slice(1).filter(x=>x.some(v=>v.trim())).map(x=>Object.fromEntries(h.map((k,i)=>[k,(x[i]||"").trim()])))}
 async function sheetAny(names,key){for(const n of names){try{const d=await sheet(n);if(d.length&&key in d[0])return d}catch(e){}}throw new Error(names.join("/"))}
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]));
-const stat=r=>ST.includes(r["Status Pelaksanaan"])?r["Status Pelaksanaan"]:"Belum dilaksanakan";
-const lap=r=>(r["Status Laporan"]||"Belum")=="Sudah"?"Sudah":"Belum";
+const stat=r=>sreg(ST,COL,CLS,snorm(r["Status Pelaksanaan"],ST)||"Belum dilaksanakan");
+const LS=["Sudah","Belum"],LCOL={Sudah:"#2E9E5B",Belum:"#B8C2D3"},LCLS={Sudah:"s-ok",Belum:"s-wait"};
+const lap=r=>sreg(LS,LCOL,LCLS,snorm(r["Status Laporan"],LS)||"Belum");
 function fill(id,vals,first){const s=$(id);const cur=s.value;s.innerHTML=`<option value="">${first}</option>`+vals.map(v=>`<option>${esc(v)}</option>`).join("");s.value=cur}
 const RM={I:1,II:2,III:3,IV:4},BLN=["januari","februari","maret","april","mei","juni","juli","agustus","september","oktober","november","desember"];
 function sq(r){const p=(r["Periode"]||"").toLowerCase();let m=/triwulan\s+(iv|iii|ii|i)\b/.exec(p);if(m)return[RM[m[1].toUpperCase()]];m=/semester\s+(ii|i)\b/.exec(p);if(m)return m[1]=="ii"?[3,4]:[1,2];m=/minggu ke-(\d+)/.exec(p);if(m)return[Math.min(4,Math.ceil(+m[1]/13))];const b=BLN.findIndex(x=>p.startsWith(x));return b>=0?[Math.floor(b/3)+1]:[]}
 const twl=r=>{const q=sq(r),R=["","I","II","III","IV"];return q.length?"Triwulan "+R[q[0]]+(q.length>1?"–"+R[q[q.length-1]]:""):"–"};
 function filtered(){const q=$("q").value.toLowerCase(),k=$("fk").value,s=$("fs").value,t=$("ft").value,l=$("fl").value,w=$("fq").value;
  return rows.filter(r=>(!k||r["Kegiatan"]==k)&&(!s||r["Satuan"]==s)&&(!t||stat(r)==t)&&(!l||lap(r)==l)&&(!w||sq(r).includes(+w))&&(!q||(r["Kegiatan"]+" "+r["Periode"]+" "+(r["Keterangan (alasan jadwal berubah / tidak terlaksana)"]||"")).toLowerCase().includes(q)))}
-function table(){const f=filtered();$("tb").innerHTML=f.slice(0,shown).map(r=>{const s=stat(r);return`<tr><td>${esc(r["Kegiatan"])}</td><td>${esc(r._b||"–")}</td><td>${esc(r["Periode"])}</td><td>${twl(r)}</td><td>${esc(r["Tanggal Jadwal Awal"]||"–")}</td><td>${esc(r["Tanggal Realisasi"]||"–")}</td><td><span class="b ${CLS[s]}">${s}</span></td><td><span class="b ${lap(r)=="Sudah"?"s-ok":"s-wait"}">${lap(r)}</span></td><td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||`<tr><td colspan="9">Tidak ada data yang cocok.</td></tr>`;
+function table(){const f=filtered();$("tb").innerHTML=f.slice(0,shown).map(r=>{const s=stat(r);return`<tr><td>${esc(r["Kegiatan"])}</td><td>${esc(r._b||"–")}</td><td>${esc(r["Periode"])}</td><td>${twl(r)}</td><td>${esc(r["Tanggal Jadwal Awal"]||"–")}</td><td>${esc(r["Tanggal Realisasi"]||"–")}</td><td><span class="b ${CLS[s]}">${s}</span></td><td><span class="b ${LCLS[lap(r)]}">${lap(r)}</span></td><td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||`<tr><td colspan="9">Tidak ada data yang cocok.</td></tr>`;
  $("cnt").textContent=`Menampilkan ${Math.min(shown,f.length)} dari ${f.length} baris`;$("more").classList.toggle("hide",f.length<=shown)}
-function render(){const n=rows.length,c={};ST.forEach(s=>c[s]=0);rows.forEach(r=>c[stat(r)]++);const done=c[ST[0]]+c[ST[1]],lp=rows.filter(r=>lap(r)=="Sudah").length,pct=n?Math.round(done/n*100):0;
- $("kpis").innerHTML=[["Total jadwal kegiatan",n,""],["Sudah terlaksana",done,"k-g"],["Jadwal berubah",c[ST[1]],"k-o"],["Tidak terlaksana",c[ST[2]],"k-r"],["Belum dilaksanakan",c[ST[3]],"k-a"],["Laporan sudah dibuat",lp,"k-g"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
+function render(){const n=rows.length,c={};ST.forEach(s=>c[s]=0);rows.forEach(r=>c[stat(r)]=(c[stat(r)]||0)+1);const done=c[ST[0]]+c[ST[1]],lp=rows.filter(r=>lap(r)=="Sudah").length,pct=n?Math.round(done/n*100):0;
+ $("kpis").innerHTML=[["Total jadwal kegiatan",n,""],["Sudah terlaksana",done,"k-g"],["Jadwal berubah",c[ST[1]],"k-o"],["Tidak terlaksana",c[ST[2]],"k-r"],["Belum dilaksanakan",c[ST[3]],"k-a"],...ST.slice(4).map(x=>[x,c[x],"k-x"]),["Laporan sudah dibuat",lp,"k-g"],...LS.slice(2).map(x=>["Laporan "+x.toLowerCase(),rows.filter(r=>lap(r)==x).length,"k-x"])].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
  $("pbar").style.width=pct+"%";$("ptxt").textContent=`${done} dari ${n} jadwal sudah terlaksana (${pct}%). Laporan selesai: ${lp} dari ${done} kegiatan terlaksana.`;
  const names=[...new Set(rows.map(r=>r["Kegiatan"]))];
  if(ch1)ch1.destroy();ch1=new Chart($("c1"),{type:"doughnut",data:{labels:ST,datasets:[{data:ST.map(s=>c[s]),backgroundColor:ST.map(s=>COL[s]),borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
@@ -198,12 +204,12 @@ async function exportX(o){try{
  const bl=new Blob([await wb.xlsx.writeBuffer()],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download=o.file;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000)
 }catch(e){alert("Gagal membuat file Excel: "+e.message)}}
 function xls(){const f=filtered();if(!f.length){alert("Tidak ada data untuk diunduh.");return}
- const c={};ST.forEach(s=>c[s]=0);f.forEach(r=>c[stat(r)]++);
+ const c={};ST.forEach(s=>c[s]=0);f.forEach(r=>c[stat(r)]=(c[stat(r)]||0)+1);
  exportX({sheet:"SKM",file:"SKM_KPPN_Medan_I_"+new Date().toISOString().slice(0,10)+".xlsx",title:"Laporan Pelaksanaan SKM – KPPN Medan I",filter:fdesc(),info:`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah baris: ${f.length} · ${ST.map(s=>s+": "+c[s]).join(" · ")}`,
   headers:["No","Kegiatan","Satuan","Periode","Triwulan","Tanggal Jadwal Awal","Tanggal Realisasi","Status Pelaksanaan","Status Laporan","Keterangan","Link Bukti"],widths:[6,52,11,22,16,16,16,26,14,44,16],stat:[7,8],
   rows:f.map((r,i)=>[i+1,r["Kegiatan"],r["Satuan"],r["Periode"],twl(r),r["Tanggal Jadwal Awal"],r["Tanggal Realisasi"],stat(r),lap(r),r[KET],r["Link Bukti"]])})}
 function pdf(){const f=filtered();if(!f.length){alert("Tidak ada data untuk dicetak.");return}
- const c={};ST.forEach(s=>c[s]=0);f.forEach(r=>c[stat(r)]++);
+ const c={};ST.forEach(s=>c[s]=0);f.forEach(r=>c[stat(r)]=(c[stat(r)]||0)+1);
  $("pa").innerHTML=`<div class="ph"><img src="assets/kemenkeu.png" alt=""><img src="assets/djpb.png" alt=""><img src="assets/kppn-medan-i.png" alt=""><img class="r" src="assets/intress.png" alt=""></div><h1>Laporan Pelaksanaan SKM – KPPN Medan I</h1><p>Filter: ${esc(fdesc())}</p><p>Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah baris: ${f.length} · ${ST.map(s=>s+": "+c[s]).join(" · ")}</p><table><colgroup><col style="width:4%"><col style="width:25%"><col style="width:12%"><col style="width:10%"><col style="width:10%"><col style="width:13%"><col style="width:8%"><col style="width:18%"></colgroup><thead><tr><th>No</th><th>Kegiatan</th><th>Periode</th><th>Jadwal awal</th><th>Realisasi</th><th>Status</th><th>Laporan</th><th>Keterangan</th></tr></thead><tbody>${f.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r["Kegiatan"])}</td><td>${esc(r["Periode"])}</td><td>${esc(r["Tanggal Jadwal Awal"]||"–")}</td><td>${esc(r["Tanggal Realisasi"]||"–")}</td><td>${stat(r)}</td><td>${lap(r)}</td><td>${esc(r[KET]||"")}</td></tr>`).join("")}</tbody></table>`;
  const imgs=[...$("pa").querySelectorAll("img")];Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>window.print(),150))}
 $("bx").onclick=xls;$("bp").onclick=pdf;
@@ -211,14 +217,14 @@ $("bx").onclick=xls;$("bp").onclick=pdf;
 const PS=["Sudah","Proses","Belum","Terlambat"],PCOL={Sudah:"#2E9E5B",Proses:"#F5A623",Belum:"#B8C2D3",Terlambat:"#D64545"},PCLS={Sudah:"s-ok",Proses:"s-chg",Belum:"s-wait",Terlambat:"s-no"};
 let prow=[],pn=25,pc3,pc4;
 function pdt(s){const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec((s||"").trim());return m?new Date(+m[3],+m[2]-1,+m[1],23,59,59):null}
-const pbase=r=>["Sudah","Proses"].includes(r["Status"])?r["Status"]:"Belum";
-const pst=r=>{if(pbase(r)=="Sudah")return"Sudah";const d=pdt(r["Batas Waktu"]);return d&&d<new Date()?"Terlambat":pbase(r)};
+const pbase=r=>snorm(r["Status"],PS)||"Belum";
+const pst=r=>{const b=pbase(r);if(b=="Sudah")return"Sudah";const d=pdt(r["Batas Waktu"]);return d&&d<new Date()?"Terlambat":sreg(PS,PCOL,PCLS,b)};
 const pday=r=>{const x=pdt(r["Batas Waktu"]);return x?`${x.getFullYear()}-${String(x.getMonth()+1).padStart(2,"0")}-${String(x.getDate()).padStart(2,"0")}`:""};
 function pf(){const q=$("p-q").value.toLowerCase(),g=$("p-g").value,j=$("p-j").value,t=$("p-t").value,d=$("p-d").value;return prow.filter(r=>(!g||r["Kelompok"]==g)&&(!j||r["Jenis Pemantauan"]==j)&&(!t||pst(r)==t)&&(!d||pday(r)==d)&&(!q||(r["Tema Pengawasan"]+" "+r["Kegiatan"]+" "+r["Catatan"]).toLowerCase().includes(q)))}
 function ptable(){const f=pf();$("ptb").innerHTML=f.slice(0,pn).map(r=>{const s=pst(r);return`<tr><td><b>${esc(r["Tema Pengawasan"])}</b><br><small style="color:#667085">${esc(r["Kegiatan"])}</small></td><td>${esc(r["Jenis Pemantauan"])}</td><td>${esc(r["Termin"]||"–")}</td><td>${esc(r["Target Waktu Pelaporan"])}</td><td>${esc(r["Batas Waktu"]||"–")}</td><td><span class="b ${PCLS[s]}">${s}</span></td><td>${esc(r["Tanggal Realisasi"]||"–")}</td><td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||'<tr><td colspan="8">Tidak ada data yang cocok.</td></tr>';
  $("pcn").textContent=`Menampilkan ${Math.min(pn,f.length)} dari ${f.length} baris`;$("pm").classList.toggle("hide",f.length<=pn)}
-function prender(){const n=prow.length,c={};PS.forEach(s=>c[s]=0);prow.forEach(r=>c[pst(r)]++);const pct=n?Math.round(c.Sudah/n*100):0;
- $("pk").innerHTML=[["Total tenggat laporan",n,""],["Sudah selesai",c.Sudah,"k-g"],["Sedang proses",c.Proses,"k-o"],["Belum dikerjakan",c.Belum,"k-a"],["Terlambat",c.Terlambat,"k-r"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
+function prender(){const n=prow.length,c={};PS.forEach(s=>c[s]=0);prow.forEach(r=>c[pst(r)]=(c[pst(r)]||0)+1);const pct=n?Math.round(c.Sudah/n*100):0;
+ $("pk").innerHTML=[["Total tenggat laporan",n,""],["Sudah selesai",c.Sudah,"k-g"],["Sedang proses",c.Proses,"k-o"],["Belum dikerjakan",c.Belum,"k-a"],["Terlambat",c.Terlambat,"k-r"],...PS.slice(4).map(x=>[x,c[x],"k-x"])].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
  $("pbr").style.width=pct+"%";$("ptx").textContent=`${c.Sudah} dari ${n} tenggat laporan sudah selesai (${pct}%).`;
  const js=[...new Set(prow.map(r=>r["Jenis Pemantauan"]))];
  if(pc3)pc3.destroy();pc3=new Chart($("c3"),{type:"doughnut",data:{labels:PS,datasets:[{data:PS.map(s=>c[s]),backgroundColor:PS.map(s=>PCOL[s]),borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
@@ -229,12 +235,12 @@ function pacts(){$("pacts").innerHTML=pind.length?pind.map(a=>`<div class="act">
 async function loadP(){try{prow=(await sheet("PTKI_Pelaksanaan")).filter(r=>r["Tema Pengawasan"]);$("perr").classList.add("hide");prender()}catch(e){$("perr").classList.remove("hide");$("perr").innerHTML="Data PTKI belum bisa dimuat. Pastikan tab PTKI_Pelaksanaan ada dan Google Sheets dibagikan dengan akses “Siapa saja yang memiliki link” (Viewer)."}
  try{pind=(await sheet("PTKI_Induk")).filter(r=>r["Tema Pengawasan"])}catch(e){pind=[]}pacts()}
 function pxls(){const f=pf();if(!f.length){alert("Tidak ada data untuk diunduh.");return}
- const c={};PS.forEach(s=>c[s]=0);f.forEach(r=>c[pst(r)]++);const d=[];if($("p-g").value)d.push("Kelompok: "+$("p-g").value);if($("p-j").value)d.push("Jenis: "+$("p-j").value);if($("p-t").value)d.push("Status: "+$("p-t").value);if($("p-q").value)d.push("Pencarian: "+$("p-q").value);
+ const c={};PS.forEach(s=>c[s]=0);f.forEach(r=>c[pst(r)]=(c[pst(r)]||0)+1);const d=[];if($("p-g").value)d.push("Kelompok: "+$("p-g").value);if($("p-j").value)d.push("Jenis: "+$("p-j").value);if($("p-t").value)d.push("Status: "+$("p-t").value);if($("p-q").value)d.push("Pencarian: "+$("p-q").value);
  exportX({sheet:"PTKI",file:"PTKI_KPPN_Medan_I_"+new Date().toISOString().slice(0,10)+".xlsx",title:"Laporan Pemantauan PTKI – KPPN Medan I",filter:d.length?d.join(" · "):"Semua data (tanpa filter)",info:`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah baris: ${f.length} · ${PS.map(s=>s+": "+c[s]).join(" · ")}`,
   headers:["No","Kelompok","Tema Pengawasan","Kegiatan","Jenis Pemantauan","Termin","Target Waktu Pelaporan","Batas Waktu","Status","Tanggal Realisasi","Catatan","Link Bukti"],widths:[6,14,44,50,16,14,26,14,13,16,36,16],stat:[8],
   rows:f.map((r,i)=>[i+1,r["Kelompok"],r["Tema Pengawasan"],r["Kegiatan"],r["Jenis Pemantauan"],r["Termin"],r["Target Waktu Pelaporan"],r["Batas Waktu"],pst(r),r["Tanggal Realisasi"],r["Catatan"],r["Link Bukti"]])})}
 function ppdf(){const f=pf();if(!f.length){alert("Tidak ada data untuk dicetak.");return}
- const c={};PS.forEach(s=>c[s]=0);f.forEach(r=>c[pst(r)]++);const d=[];if($("p-g").value)d.push("Kelompok: "+$("p-g").value);if($("p-j").value)d.push("Jenis: "+$("p-j").value);if($("p-t").value)d.push("Status: "+$("p-t").value);if($("p-q").value)d.push("Pencarian: "+$("p-q").value);
+ const c={};PS.forEach(s=>c[s]=0);f.forEach(r=>c[pst(r)]=(c[pst(r)]||0)+1);const d=[];if($("p-g").value)d.push("Kelompok: "+$("p-g").value);if($("p-j").value)d.push("Jenis: "+$("p-j").value);if($("p-t").value)d.push("Status: "+$("p-t").value);if($("p-q").value)d.push("Pencarian: "+$("p-q").value);
  $("pa").innerHTML=`<div class="ph"><img src="assets/kemenkeu.png" alt=""><img src="assets/djpb.png" alt=""><img src="assets/kppn-medan-i.png" alt=""><img class="r" src="assets/intress.png" alt=""></div><h1>Laporan Pemantauan PTKI – KPPN Medan I</h1><p>Filter: ${esc(d.length?d.join(" · "):"Semua data (tanpa filter)")}</p><p>Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah baris: ${f.length} · ${PS.map(s=>s+": "+c[s]).join(" · ")}</p><table><colgroup><col style="width:4%"><col style="width:30%"><col style="width:9%"><col style="width:9%"><col style="width:13%"><col style="width:10%"><col style="width:10%"><col style="width:15%"></colgroup><thead><tr><th>No</th><th>Tema / kegiatan</th><th>Jenis</th><th>Termin</th><th>Target lapor</th><th>Batas waktu</th><th>Status</th><th>Realisasi</th></tr></thead><tbody>${f.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r["Tema Pengawasan"])}<br>${esc(r["Kegiatan"])}</td><td>${esc(r["Jenis Pemantauan"])}</td><td>${esc(r["Termin"]||"–")}</td><td>${esc(r["Target Waktu Pelaporan"])}</td><td>${esc(r["Batas Waktu"]||"–")}</td><td>${pst(r)}</td><td>${esc(r["Tanggal Realisasi"]||"–")}</td></tr>`).join("")}</tbody></table>`;
  const im=[...$("pa").querySelectorAll("img")];Promise.all(im.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>setTimeout(()=>window.print(),150))}
 ["p-q","p-g","p-j","p-t","p-d"].forEach(i=>$(i).addEventListener("input",()=>{pn=25;ptable()}));
@@ -246,13 +252,13 @@ const nm=s=>{const v=parseFloat(String(s==null?"":s).replace("%","").replace(","
 const fm=v=>v==null?"–":v.toLocaleString("id-ID",{maximumFractionDigits:2});
 const wpc=r=>{const s=String(r["Persen "+wy()]||""),v=nm(s);if(v==null)return null;return s.includes("%")?v:(v<=1?v*100:v)};
 const wy=()=>$("w-y").value;
-const wst=r=>{const s=r["Status "+wy()];return WS.includes(s)?s:"Belum"};
+const wst=r=>sreg(WS,WCOL,WCLS,snorm(r["Status "+wy()],WS)||"Belum");
 const wkey=r=>r["Kategori"]+"|"+r["Komponen"];
 const wyears=()=>wrow.length?Object.keys(wrow[0]).map(k=>/^Status (\d{4})$/.exec(k)).filter(Boolean).map(m=>m[1]).sort():[];
 function wf(){const q=$("w-q").value.toLowerCase(),k=$("w-k").value,c=$("w-c").value,t=$("w-t").value;return wrow.filter(r=>(!k||r["Kategori"]==k)&&(!c||r["Komponen"]==c)&&(!t||wst(r)==t)&&(!q||(r["Dokumen (Standar Dokumen)"]+" "+r["Sub Bab"]).toLowerCase().includes(q)))}
 function wpk(r){return wnil.find(n=>n["Jenis"]=="Komponen"&&n["Kategori"]==r["Kategori"]&&nm(n["Kode"])!=null&&nm(n["Kode"])==nm(r["No Komponen"]))||wnil.find(n=>n["Jenis"]=="Komponen"&&n["Kategori"]==r["Kategori"]&&String(n["Uraian"]).trim()==String(r["Komponen"]).trim())}
 function wpcell(r){const x=wpk(r);if(!x)return"–";const p=wpc(x);return`<b>${p==null?"–":fm(Math.round(p*10)/10)+"%"}</b><div class="pb" style="margin:6px 0 4px"><i style="width:${Math.min(100,p||0)}%"></i></div><small style="color:#667085">Nilai ${fm(nm(x["Nilai "+wy()]))} dari bobot ${fm(nm(x["Bobot"]))}</small>`}
-function wsubs(){const m=new Map();wrow.forEach(r=>{const k=wkey(r)+"|"+r["Sub Bab"],o=m.get(k)||{n:0,d:0,p:0},s=wst(r);o.n++;if(s=="Sudah")o.d++;if(s=="Sebagian")o.p++;m.set(k,o)});return m}
+function wsubs(){const m=new Map();wrow.forEach(r=>{const k=wkey(r)+"|"+r["Sub Bab"],o=m.get(k)||{n:0,d:0,p:0},s=wst(r);o.n++;if(s=="Sudah")o.d++;if(s!="Sudah"&&s!="Belum")o.p++;m.set(k,o)});return m}
 function wtable(){const y=wy(),f=wf(),sm=wsubs(),ks=f.map(wkey),ss=f.map(r=>wkey(r)+"|"+r["Sub Bab"]),sk=f.map(()=>0),sb=f.map(()=>0);
  for(let i=0;i<f.length;){let j=i;while(j<f.length&&ks[j]==ks[i])j++;sk[i]=j-i;i=j}
  for(let i=0;i<f.length;){let j=i;while(j<f.length&&ss[j]==ss[i])j++;sb[i]=j-i;i=j}
@@ -260,8 +266,8 @@ function wtable(){const y=wy(),f=wf(),sm=wsubs(),ks=f.map(wkey),ss=f.map(r=>wkey
   return`<tr>${sk[i]?`<td rowspan="${sk[i]}" class="mg"><b>${esc(r["Komponen"])}</b><br><small style="color:#667085">${esc(r["Kategori"])}</small></td><td rowspan="${sk[i]}" class="mg">${wpcell(r)}</td>`:""}${sb[i]?`<td rowspan="${sb[i]}" class="mg">${esc(r["Sub Bab"])}</td>`:""}<td style="white-space:pre-line">${esc(r["Dokumen (Standar Dokumen)"])}</td><td><span class="b ${WCLS[s]}">${s}</span></td>${sb[i]?`<td rowspan="${sb[i]}" class="mg"><span class="b ${pc}">${ps}</span> <small style="color:#667085">${o.d} dari ${o.n} dokumen</small></td>`:""}<td>${lk?`<a href="${esc(lk)}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||'<tr><td colspan="7">Tidak ada data yang cocok.</td></tr>';
  $("wcn").textContent=`Tahun ${y}: menampilkan ${f.length} dokumen`;$("wm").classList.add("hide")}
 function wrender(){const ys=wyears(),s=$("w-y"),cur=s.value,cy=String(new Date().getFullYear());s.innerHTML=ys.map(y=>`<option>${y}</option>`).join("");s.value=ys.includes(cur)?cur:(ys.includes(cy)?cy:(ys[ys.length-1]||""));
- const n=wrow.length,c={};WS.forEach(x=>c[x]=0);wrow.forEach(r=>c[wst(r)]++);const pct=n?Math.round(c.Sudah/n*100):0;
- $("wk").innerHTML=[["Total dokumen pengungkit",n,""],["Sudah ada",c.Sudah,"k-g"],["Sebagian",c.Sebagian,"k-o"],["Belum ada",c.Belum,"k-a"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
+ const n=wrow.length,c={};WS.forEach(x=>c[x]=0);wrow.forEach(r=>c[wst(r)]=(c[wst(r)]||0)+1);const pct=n?Math.round(c.Sudah/n*100):0;
+ $("wk").innerHTML=[["Total dokumen pengungkit",n,""],["Sudah ada",c.Sudah,"k-g"],["Sebagian",c.Sebagian,"k-o"],["Belum ada",c.Belum,"k-a"],...WS.slice(3).map(x=>[x,c[x],"k-x"])].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
  $("wbr").style.width=pct+"%";$("wtx").textContent=`Tahun ${s.value}: ${c.Sudah} dari ${n} dokumen sudah ada (${pct}%).`;
  const kk=[...new Set(wrow.map(wkey))];
  if(wc1)wc1.destroy();wc1=new Chart($("c5"),{type:"doughnut",data:{labels:WS,datasets:[{data:WS.map(x=>c[x]),backgroundColor:WS.map(x=>WCOL[x]),borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
@@ -276,7 +282,7 @@ function wnilai(){const by=u=>wnil.find(r=>String(r["Uraian"]).trim().toUpperCas
 async function loadW(){try{wrow=(await sheetAny(["WBK_Pelaksanaan","WBK_Dokumen"],"Dokumen (Standar Dokumen)")).filter(r=>r["Dokumen (Standar Dokumen)"]);$("werr").classList.add("hide");wrender()}catch(e){$("werr").classList.remove("hide");$("werr").innerHTML="Data WBK/WBBM belum bisa dimuat. Pastikan tab WBK_Pelaksanaan ada dan Google Sheets dibagikan dengan akses “Siapa saja yang memiliki link” (Viewer)."}
  try{wnil=await sheet("WBK_Nilai");wnilai();if(wrow.length)wtable()}catch(e){wnil=[];$("wnl").innerHTML=""}}
 function wdesc(){const d=["Tahun: "+wy()];if($("w-k").value)d.push("Kategori: "+$("w-k").value);if($("w-c").value)d.push("Komponen: "+$("w-c").value);if($("w-t").value)d.push("Status: "+$("w-t").value);if($("w-q").value)d.push("Pencarian: "+$("w-q").value);return d.join(" · ")}
-function wsum(f){const c={};WS.forEach(s=>c[s]=0);f.forEach(r=>c[wst(r)]++);return`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah dokumen: ${f.length} · ${WS.map(s=>s+": "+c[s]).join(" · ")}`}
+function wsum(f){const c={};WS.forEach(s=>c[s]=0);f.forEach(r=>c[wst(r)]=(c[wst(r)]||0)+1);return`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah dokumen: ${f.length} · ${WS.map(s=>s+": "+c[s]).join(" · ")}`}
 function wxls(){const f=wf(),y=wy();if(!f.length){alert("Tidak ada data untuk diunduh.");return}
  exportX({sheet:"WBK-WBBM "+y,file:"WBK_WBBM_Pengungkit_"+y+"_KPPN_Medan_I_"+new Date().toISOString().slice(0,10)+".xlsx",title:"Laporan Dokumen Pengungkit WBK/WBBM Tahun "+y+" – KPPN Medan I",filter:wdesc(),info:wsum(f),
   headers:["No","Kategori","Komponen","Sub Bab","Kode","Dokumen (Standar Dokumen)","Tahun","Status","Link Bukti"],widths:[6,12,30,32,7,70,8,12,18],stat:[7],
@@ -288,24 +294,25 @@ function wpdf(){const f=wf(),y=wy();if(!f.length){alert("Tidak ada data untuk di
 $("w-r").onclick=()=>{["w-q","w-k","w-c","w-t"].forEach(i=>$(i).value="");wtable()};$("w-x").onclick=wxls;$("w-p").onclick=wpdf;
 // ===== SMAP =====
 let srow=[],sc1,sc2;
-const sst=r=>(r["Status (Sudah/Belum)"]||"")=="Sudah"?"Sudah":"Belum";
+const SMS=["Sudah","Belum"],SMC={Sudah:"#2E9E5B",Belum:"#B8C2D3"},SML={Sudah:"s-ok",Belum:"s-wait"};
+const sst=r=>sreg(SMS,SMC,SML,snorm(r["Status (Sudah/Belum)"],SMS)||"Belum");
 function sf(){const q=$("s-q").value.toLowerCase(),k=$("s-k").value,t=$("s-t").value;return srow.filter(r=>(!k||r["Klausul"]==k)&&(!t||sst(r)==t)&&(!q||(r["Dokumen Pendukung"]+" "+r["Nama Klausul"]).toLowerCase().includes(q)))}
-function stable(){const f=sf(),all=new Map();srow.forEach(r=>{const k=r["Klausul"]+"|"+r["Sub-klausul"],o=all.get(k)||{n:0,d:0};o.n++;if(sst(r)=="Sudah")o.d++;all.set(k,o)});
+function stable(){const f=sf(),all=new Map();srow.forEach(r=>{const k=r["Klausul"]+"|"+r["Sub-klausul"],o=all.get(k)||{n:0,d:0};o.n++;if(sst(r)=="Sudah")o.d++;else if(sst(r)!="Belum")o.p=(o.p||0)+1;all.set(k,o)});
  const kk=f.map(r=>r["Klausul"]),ss=f.map(r=>r["Klausul"]+"|"+r["Sub-klausul"]),sk=f.map(()=>0),sb=f.map(()=>0);
  for(let i=0;i<f.length;){let j=i;while(j<f.length&&kk[j]==kk[i])j++;sk[i]=j-i;i=j}
  for(let i=0;i<f.length;){let j=i;while(j<f.length&&ss[j]==ss[i])j++;sb[i]=j-i;i=j}
- $("stb").innerHTML=f.map((r,i)=>{const o=all.get(ss[i]),ps=o.d==o.n?"Lengkap":(o.d>0?"Sebagian":"Belum"),pc=ps=="Lengkap"?"s-ok":ps=="Sebagian"?"s-chg":"s-wait",st=sst(r);
-  return`<tr>${sk[i]?`<td rowspan="${sk[i]}" class="mg"><b>Klausul ${esc(r["Klausul"])}</b></td>`:""}${sb[i]?`<td rowspan="${sb[i]}" class="mg"><b>${esc(r["Sub-klausul"])}</b><br><small style="color:#667085">${esc(r["Nama Klausul"])}</small></td>`:""}<td>${esc(r["Dokumen Pendukung"])}</td><td><span class="b ${st=="Sudah"?"s-ok":"s-wait"}">${st}</span></td>${sb[i]?`<td rowspan="${sb[i]}" class="mg"><span class="b ${pc}">${ps}</span> <small style="color:#667085">${o.d} dari ${o.n} dokumen</small></td>`:""}<td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||'<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>';
+ $("stb").innerHTML=f.map((r,i)=>{const o=all.get(ss[i]),ps=o.d==o.n?"Lengkap":(o.d>0||o.p?"Sebagian":"Belum"),pc=ps=="Lengkap"?"s-ok":ps=="Sebagian"?"s-chg":"s-wait",st=sst(r);
+  return`<tr>${sk[i]?`<td rowspan="${sk[i]}" class="mg"><b>Klausul ${esc(r["Klausul"])}</b></td>`:""}${sb[i]?`<td rowspan="${sb[i]}" class="mg"><b>${esc(r["Sub-klausul"])}</b><br><small style="color:#667085">${esc(r["Nama Klausul"])}</small></td>`:""}<td>${esc(r["Dokumen Pendukung"])}</td><td><span class="b ${SML[st]}">${st}</span></td>${sb[i]?`<td rowspan="${sb[i]}" class="mg"><span class="b ${pc}">${ps}</span> <small style="color:#667085">${o.d} dari ${o.n} dokumen</small></td>`:""}<td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||'<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>';
  $("scn").textContent=`Menampilkan ${f.length} dari ${srow.length} dokumen`}
 function srender(){const n=srow.length,d=srow.filter(r=>sst(r)=="Sudah").length,bk=srow.filter(r=>r["Link Bukti"]).length,pct=n?Math.round(d/n*1000)/10:0,ks=[...new Set(srow.map(r=>r["Klausul"]))].sort((a,b)=>a-b);
- $("sk").innerHTML=[["Total dokumen pendukung",n,""],["Sudah ada",d,"k-g"],["Belum ada",n-d,"k-a"],["Bukti terisi",bk,"k-o"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
+ $("sk").innerHTML=[["Total dokumen pendukung",n,""],["Sudah ada",d,"k-g"],["Belum ada",srow.filter(r=>sst(r)=="Belum").length,"k-a"],...SMS.slice(2).map(x=>[x,srow.filter(r=>sst(r)==x).length,"k-x"]),["Bukti terisi",bk,"k-o"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
  $("sbr").style.width=pct+"%";$("stx").textContent=`${d} dari ${n} dokumen pendukung sudah ada (${pct}%).`;
- if(sc1)sc1.destroy();sc1=new Chart($("c9"),{type:"doughnut",data:{labels:["Sudah","Belum"],datasets:[{data:[d,n-d],backgroundColor:["#2E9E5B","#B8C2D3"],borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
- if(sc2)sc2.destroy();sc2=new Chart($("c10"),{type:"bar",data:{labels:ks.map(k=>"Klausul "+k),datasets:[["Sudah","#2E9E5B"],["Belum","#B8C2D3"]].map(a=>({label:a[0],backgroundColor:a[1],data:ks.map(k=>srow.filter(r=>r["Klausul"]==k&&sst(r)==a[0]).length)}))},options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,ticks:{precision:0}}},plugins:{legend:{position:"bottom"}}}});
+ if(sc1)sc1.destroy();sc1=new Chart($("c9"),{type:"doughnut",data:{labels:SMS,datasets:[{data:SMS.map(x=>srow.filter(r=>sst(r)==x).length),backgroundColor:SMS.map(x=>SMC[x]),borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
+ if(sc2)sc2.destroy();sc2=new Chart($("c10"),{type:"bar",data:{labels:ks.map(k=>"Klausul "+k),datasets:SMS.map(x=>[x,SMC[x]]).map(a=>({label:a[0],backgroundColor:a[1],data:ks.map(k=>srow.filter(r=>r["Klausul"]==k&&sst(r)==a[0]).length)}))},options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,ticks:{precision:0}}},plugins:{legend:{position:"bottom"}}}});
  const s=$("s-k"),cur=s.value;s.innerHTML='<option value="">Semua klausul</option>'+ks.map(k=>`<option value="${esc(k)}">Klausul ${esc(k)}</option>`).join("");s.value=cur;stable()}
 async function loadS(){try{const d=await sheetAny(["SMAP_Pelaksanaan","SMAP_Data","Data"],"Dokumen Pendukung");srow=d.filter(r=>r["Dokumen Pendukung"]);$("serr").classList.add("hide");srender()}catch(e){$("serr").classList.remove("hide");$("serr").innerHTML="Data SMAP belum bisa dimuat. Pastikan tab SMAP_Pelaksanaan ada dan Google Sheets dibagikan dengan akses “Siapa saja yang memiliki link” (Viewer)."}}
 function sdesc(){const d=[];if($("s-k").value)d.push("Klausul: "+$("s-k").value);if($("s-t").value)d.push("Status: "+$("s-t").value);if($("s-q").value)d.push("Pencarian: "+$("s-q").value);return d.length?d.join(" · "):"Semua data (tanpa filter)"}
-function ssum(f){const d=f.filter(r=>sst(r)=="Sudah").length;return`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah dokumen: ${f.length} · Sudah: ${d} · Belum: ${f.length-d}`}
+function ssum(f){const d=f.filter(r=>sst(r)=="Sudah").length;return`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah dokumen: ${f.length} · ${SMS.map(x=>x+": "+f.filter(r=>sst(r)==x).length).join(" · ")}`}
 function sxls(){const f=sf();if(!f.length){alert("Tidak ada data untuk diunduh.");return}
  exportX({sheet:"SMAP",file:"SMAP_KPPN_Medan_I_"+new Date().toISOString().slice(0,10)+".xlsx",title:"Laporan Dokumen Pendukung SMAP (ISO 37001) – KPPN Medan I",filter:sdesc(),info:ssum(f),
   headers:["No","Klausul","Sub-klausul","Nama Klausul","Dokumen Pendukung","Status","Link Bukti"],widths:[6,10,12,44,60,12,18],stat:[5],
@@ -316,21 +323,22 @@ function spdf(){const f=sf();if(!f.length){alert("Tidak ada data untuk dicetak."
 ["s-q","s-k","s-t"].forEach(i=>$(i).addEventListener("input",stable));$("s-r").onclick=()=>{["s-q","s-k","s-t"].forEach(i=>$(i).value="");stable()};$("s-x").onclick=sxls;$("s-p").onclick=spdf;
 // ===== MANAJEMEN RISIKO =====
 let mrow=[],mc1,mc2;
-const mst=r=>(r["Dokumen (Sudah/Belum)"]||"")=="Sudah"?"Sudah":"Belum";
+const MRS=["Sudah","Belum"],MRC={Sudah:"#2E9E5B",Belum:"#B8C2D3"},MRL={Sudah:"s-ok",Belum:"s-wait"};
+const mst=r=>sreg(MRS,MRC,MRL,snorm(r["Dokumen (Sudah/Belum)"],MRS)||"Belum");
 const mpics=r=>String(r["Penanggung Jawab"]||"").split(/\s+dan\s+(?=(?:Seksi|Subbag|Subbagian|Bagian)\b)|,|;/).map(x=>x.trim()).filter(Boolean);
 function mf(){const q=$("m-q").value.toLowerCase(),k=$("m-k").value,t=$("m-t").value;return mrow.filter(r=>(!k||mpics(r).includes(k))&&(!t||mst(r)==t)&&(!q||(r["Kejadian Risiko"]+" "+r["Rencana Aksi Mitigasi Risiko"]+" "+r["Penanggung Jawab"]).toLowerCase().includes(q)))}
-function mtable(){const f=mf();$("mtb").innerHTML=f.map(r=>{const s=mst(r);return`<tr><td>${esc(r["No"])}</td><td>${esc(r["Kejadian Risiko"])}</td><td>${esc(r["Rencana Aksi Mitigasi Risiko"])}</td><td>${esc(r["Penanggung Jawab"])}</td><td><span class="b ${s=="Sudah"?"s-ok":"s-wait"}">${s}</span></td><td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||'<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>';
+function mtable(){const f=mf();$("mtb").innerHTML=f.map(r=>{const s=mst(r);return`<tr><td>${esc(r["No"])}</td><td>${esc(r["Kejadian Risiko"])}</td><td>${esc(r["Rencana Aksi Mitigasi Risiko"])}</td><td>${esc(r["Penanggung Jawab"])}</td><td><span class="b ${MRL[s]}">${s}</span></td><td>${r["Link Bukti"]?`<a href="${esc(r["Link Bukti"])}" target="_blank" rel="noopener">Buka bukti</a>`:"–"}</td></tr>`}).join("")||'<tr><td colspan="6">Tidak ada data yang cocok.</td></tr>';
  $("mcn").textContent=`Menampilkan ${f.length} dari ${mrow.length} rencana aksi`}
 function mrender(){const n=mrow.length,d=mrow.filter(r=>mst(r)=="Sudah").length,bk=mrow.filter(r=>r["Link Bukti"]).length,pct=n?Math.round(d/n*1000)/10:0,pc=[...new Set(mrow.flatMap(mpics))];
- $("mk").innerHTML=[["Total rencana aksi mitigasi",n,""],["Dokumen sudah ada",d,"k-g"],["Dokumen belum ada",n-d,"k-a"],["Bukti terisi",bk,"k-o"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
+ $("mk").innerHTML=[["Total rencana aksi mitigasi",n,""],["Dokumen sudah ada",d,"k-g"],["Dokumen belum ada",mrow.filter(r=>mst(r)=="Belum").length,"k-a"],...MRS.slice(2).map(x=>["Dokumen "+x.toLowerCase(),mrow.filter(r=>mst(r)==x).length,"k-x"]),["Bukti terisi",bk,"k-o"]].map(a=>`<div class="card kpi ${a[2]}"><div class="n">${a[1]}</div><div class="l">${a[0]}</div></div>`).join("");
  $("mbr").style.width=pct+"%";$("mtx").textContent=`${d} dari ${n} dokumen sudah ada (${pct}%).`;
- if(mc1)mc1.destroy();mc1=new Chart($("c11"),{type:"doughnut",data:{labels:["Sudah","Belum"],datasets:[{data:[d,n-d],backgroundColor:["#2E9E5B","#B8C2D3"],borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
+ if(mc1)mc1.destroy();mc1=new Chart($("c11"),{type:"doughnut",data:{labels:MRS,datasets:[{data:MRS.map(x=>mrow.filter(r=>mst(r)==x).length),backgroundColor:MRS.map(x=>MRC[x]),borderWidth:2}]},options:{maintainAspectRatio:false,cutout:"62%",plugins:{legend:{position:"bottom"}}}});
  $("c12").parentElement.style.height=(pc.length*46+90)+"px";
- if(mc2)mc2.destroy();mc2=new Chart($("c12"),{type:"bar",data:{labels:pc.map(x=>x.length>28?x.slice(0,27)+"…":x),datasets:[["Sudah","#2E9E5B"],["Belum","#B8C2D3"]].map(a=>({label:a[0],backgroundColor:a[1],data:pc.map(u=>mrow.filter(r=>mpics(r).includes(u)&&mst(r)==a[0]).length)}))},options:{indexAxis:"y",maintainAspectRatio:false,layout:{padding:{right:12}},scales:{x:{stacked:true,ticks:{precision:0}},y:{stacked:true}},plugins:{legend:{position:"bottom"}}}});
+ if(mc2)mc2.destroy();mc2=new Chart($("c12"),{type:"bar",data:{labels:pc.map(x=>x.length>28?x.slice(0,27)+"…":x),datasets:MRS.map(x=>[x,MRC[x]]).map(a=>({label:a[0],backgroundColor:a[1],data:pc.map(u=>mrow.filter(r=>mpics(r).includes(u)&&mst(r)==a[0]).length)}))},options:{indexAxis:"y",maintainAspectRatio:false,layout:{padding:{right:12}},scales:{x:{stacked:true,ticks:{precision:0}},y:{stacked:true}},plugins:{legend:{position:"bottom"}}}});
  fill("m-k",pc,"Semua penanggung jawab");mtable()}
 async function loadM(){try{const d=await sheetAny(["Manajemen_Resiko","MR_Data","Manajemen_Risiko"],"Kejadian Risiko");mrow=d.filter(r=>r["Kejadian Risiko"]);$("merr").classList.add("hide");mrender()}catch(e){$("merr").classList.remove("hide");$("merr").innerHTML="Data manajemen risiko belum bisa dimuat. Pastikan tab Manajemen_Resiko ada dan Google Sheets dibagikan dengan akses “Siapa saja yang memiliki link” (Viewer)."}}
 function mdesc(){const d=[];if($("m-k").value)d.push("Penanggung jawab: "+$("m-k").value);if($("m-t").value)d.push("Status: "+$("m-t").value);if($("m-q").value)d.push("Pencarian: "+$("m-q").value);return d.length?d.join(" · "):"Semua data (tanpa filter)"}
-function msum(f){const d=f.filter(r=>mst(r)=="Sudah").length;return`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah rencana aksi: ${f.length} · Sudah: ${d} · Belum: ${f.length-d}`}
+function msum(f){const d=f.filter(r=>mst(r)=="Sudah").length;return`Dicetak: ${new Date().toLocaleString("id-ID")} · Jumlah rencana aksi: ${f.length} · ${MRS.map(x=>x+": "+f.filter(r=>mst(r)==x).length).join(" · ")}`}
 function mxls(){const f=mf();if(!f.length){alert("Tidak ada data untuk diunduh.");return}
  exportX({sheet:"Manajemen Risiko",file:"Manajemen_Risiko_KPPN_Medan_I_"+new Date().toISOString().slice(0,10)+".xlsx",title:"Laporan Monitoring Mitigasi Risiko – KPPN Medan I",filter:mdesc(),info:msum(f),
   headers:["No","Kejadian Risiko","Rencana Aksi Mitigasi Risiko","Penanggung Jawab","Dokumen","Link Bukti"],widths:[8,48,56,30,12,18],stat:[4],
@@ -400,10 +408,10 @@ window.mf=function(){const q=$("m-q").value.toLowerCase(),k=V("m-k"),t=V("m-t");
  return mrow.filter(r=>(!k.length||mpics(r).some(x=>k.includes(x)))&&inc(t,mst(r))&&(!q||(r["Kejadian Risiko"]+" "+r["Rencana Aksi Mitigasi Risiko"]+" "+r["Penanggung Jawab"]).toLowerCase().includes(q)))};
 
 // ---- diagram ikut filter (diperbarui di tempat) ----
-function updSKM(){if(!ch1||!ch2)return;const f=filtered(),c={};ST.forEach(s=>c[s]=0);f.forEach(r=>c[stat(r)]++);
+function updSKM(){if(!ch1||!ch2)return;const f=filtered(),c={};ST.forEach(s=>c[s]=0);f.forEach(r=>c[stat(r)]=(c[stat(r)]||0)+1);
  ch1.data.datasets[0].data=ST.map(s=>c[s]);ch1.update();const n=[...new Set(f.map(r=>r["Kegiatan"]))];
  ch2.data.labels=n.map(x=>x.length>34?x.slice(0,33)+"…":x);ch2.data.datasets.forEach((d,i)=>d.data=n.map(m=>f.filter(r=>r["Kegiatan"]==m&&stat(r)==ST[i]).length));ch2.update()}
-function updP(){if(!pc3||!pc4)return;const f=pf(),c={};PS.forEach(s=>c[s]=0);f.forEach(r=>c[pst(r)]++);
+function updP(){if(!pc3||!pc4)return;const f=pf(),c={};PS.forEach(s=>c[s]=0);f.forEach(r=>c[pst(r)]=(c[pst(r)]||0)+1);
  pc3.data.datasets[0].data=PS.map(s=>c[s]);pc3.update();const js=[...new Set(f.map(r=>r["Jenis Pemantauan"]))];
  pc4.data.labels=js;pc4.data.datasets.forEach((d,i)=>d.data=js.map(j=>f.filter(r=>r["Jenis Pemantauan"]==j&&pst(r)==PS[i]).length));pc4.update()}
 function updW7(){if(!wc7||!wnil.length)return;const k=V("w-k"),c=V("w-c"),t=V("w-t"),km=wnil.filter(r=>r["Jenis"]=="Komponen"&&["Pemenuhan","Reform"].includes(r["Kategori"])),
@@ -411,17 +419,17 @@ function updW7(){if(!wc7||!wnil.length)return;const k=V("w-k"),c=V("w-c"),t=V("w
  if(c.length||t.length||$("w-q").value){const ok=new Set(wf().map(r=>{const x=wpk(r);return x&&x["Uraian"]}));lb=lb.filter(l=>ok.has(l))}
  wc7.data.labels=lb.map(x=>x.length>26?x.slice(0,25)+"…":x);
  wc7.data.datasets=cats.map(kt=>({label:kt,backgroundColor:kt=="Reform"?"#F5A623":"#1F5FAD",data:lb.map(l=>{const r=km.find(x=>x["Kategori"]==kt&&x["Uraian"]==l);return r?Math.round((wpc(r)||0)*10)/10:0})}));wc7.update()}
-function updW(){const f=wf();if(wc1){const c={};WS.forEach(s=>c[s]=0);f.forEach(r=>c[wst(r)]++);wc1.data.datasets[0].data=WS.map(s=>c[s]);wc1.update()}
+function updW(){const f=wf();if(wc1){const c={};WS.forEach(s=>c[s]=0);f.forEach(r=>c[wst(r)]=(c[wst(r)]||0)+1);wc1.data.datasets[0].data=WS.map(s=>c[s]);wc1.update()}
  if(wc2){const kk=[...new Set(f.map(wkey))];$("c6").parentElement.style.height=Math.min(380,Math.max(300,kk.length*30+80))+"px";
   wc2.data.labels=kk.map(k=>{const p=k.split("|"),x=p[1].length>30?p[1].slice(0,29)+"…":p[1];return[p[0],x]});
   wc2.data.datasets.forEach((d,i)=>d.data=kk.map(k=>f.filter(r=>wkey(r)==k&&wst(r)==WS[i]).length));wc2.update()}
  updW7()}
-function updS(){if(!sc1||!sc2)return;const f=sf(),d=f.filter(r=>sst(r)=="Sudah").length;sc1.data.datasets[0].data=[d,f.length-d];sc1.update();
+function updS(){if(!sc1||!sc2)return;const f=sf(),d=f.filter(r=>sst(r)=="Sudah").length;sc1.data.datasets[0].data=SMS.map(x=>f.filter(r=>sst(r)==x).length);sc1.update();
  const ks=[...new Set(f.map(r=>r["Klausul"]))].sort((a,b)=>a-b);sc2.data.labels=ks.map(k=>"Klausul "+k);
- sc2.data.datasets.forEach((x,i)=>x.data=ks.map(k=>f.filter(r=>r["Klausul"]==k&&sst(r)==["Sudah","Belum"][i]).length));sc2.update()}
-function updM(){if(!mc1||!mc2)return;const f=mf(),d=f.filter(r=>mst(r)=="Sudah").length,k=V("m-k");mc1.data.datasets[0].data=[d,f.length-d];mc1.update();
+ sc2.data.datasets.forEach((x,i)=>x.data=ks.map(k=>f.filter(r=>r["Klausul"]==k&&sst(r)==SMS[i]).length));sc2.update()}
+function updM(){if(!mc1||!mc2)return;const f=mf(),d=f.filter(r=>mst(r)=="Sudah").length,k=V("m-k");mc1.data.datasets[0].data=MRS.map(x=>f.filter(r=>mst(r)==x).length);mc1.update();
  let pc=[...new Set(f.flatMap(mpics))];if(k.length)pc=pc.filter(u=>k.includes(u));$("c12").parentElement.style.height=(pc.length*46+90)+"px";
- mc2.data.labels=pc.map(x=>x.length>28?x.slice(0,27)+"…":x);mc2.data.datasets.forEach((x,i)=>x.data=pc.map(u=>f.filter(r=>mpics(r).includes(u)&&mst(r)==["Sudah","Belum"][i]).length));mc2.update()}
+ mc2.data.labels=pc.map(x=>x.length>28?x.slice(0,27)+"…":x);mc2.data.datasets.forEach((x,i)=>x.data=pc.map(u=>f.filter(r=>mpics(r).includes(u)&&mst(r)==MRS[i]).length));mc2.update()}
 const hook=(n,u)=>{const o=window[n];window[n]=function(){const r=o.apply(this,arguments);u();return r}};
 hook("table",updSKM);hook("ptable",updP);hook("wtable",updW);hook("stable",updS);hook("mtable",updM);hook("wnilai",updW7);
 [[["w-q","w-k","w-c","w-t"],updW],[["s-q","s-k","s-t"],updS],[["m-q","m-k","m-t"],updM]].forEach(([ids,u])=>ids.forEach(i=>$(i).addEventListener("input",u)));
@@ -432,6 +440,8 @@ const sq0=window.sq,bp=r=>{const p=(r["Periode"]||"").toLowerCase(),i=BLN.findIn
 window.sq=function(r){const p=(r["Periode"]||"").toLowerCase();if(/triwulan|semester/.test(p))return sq0(r);const bl=(r._b||"").toLowerCase(),i=BLN.findIndex(x=>bl.startsWith(x));return i>=0?[Math.floor(i/3)+1]:sq0(r)};
 const bfill=()=>{let last="",lk="";rows.forEach(r=>{const k=r["Kegiatan"];if(k!=lk){last="";lk=k}const bl=(r["Bulan"]||"").trim();if(bl)last=bl;r._b=bl||(/^minggu/i.test(r["Periode"]||"")?last:"")||bp(r)})};
 const rd=window.render;window.render=function(){bfill();return rd.apply(this,arguments)};
+const ao=(id,a)=>{const e=$(id);a.forEach(v=>{if(![...e.options].some(o=>o.value==v))e.add(new Option(v,v))})};
+hook("render",()=>ao("fl",LS));hook("srender",()=>ao("s-t",SMS));hook("mrender",()=>ao("m-t",MRS));
 })();
 </script>
 </body></html>
